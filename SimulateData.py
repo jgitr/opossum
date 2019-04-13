@@ -1,8 +1,9 @@
 
 from scipy import random, linalg
 import numpy as np
+import matplotlib.pyplot as plt
 
-class SimulateData:
+class SimData:
     """
     Model: Refer to Paper in Readme
 
@@ -19,7 +20,7 @@ class SimulateData:
 
         """
 
-    def generate_covariates(self, Sigma_dimension = 10, N = 10):
+    def generate_covariates(self, Sigma_dimension = 10, N = 10, plot = True):
         """
         Algorithm for Covariates
 
@@ -52,7 +53,22 @@ class SimulateData:
         mu = [0] * N
         X = np.random.multivariate_normal(mu, Sigma, N)
 
+        if plot:
+            plt.interactive(False)
+            plt.hist(X, bins=10)
+            plt.ylabel('Test')
+            plt.show(block=True)
+
         return X
+
+        def generate_treatment_assignment():
+            """
+            Treatment assignment
+            binary and multilevel (discrete).The generation should be
+            –random (randomized control trial) with possible imbalanced assignment (e.g.  75% treatedand 25% control.
+
+            :return:
+            """
 
         def generate_treatment_effect():
             """
