@@ -95,7 +95,7 @@ class SimData:
                 a_mean = numpy.mean(a)
                 a_sigma = numpy.std(a)
                 z = (a - a_mean) / a_sigma
-                m_0 = random.normal(z)  #  Phi() # normal distribution - need expectation of a here!
+                m_0 = random.multivariate_normal(z)  #  Phi() # normal distribution - need expectation of a here!
 
                 D = ... Output
 
