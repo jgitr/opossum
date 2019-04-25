@@ -9,12 +9,19 @@ class SimData:
     """
     Model: Refer to Paper in Readme
 
+    # Y = Outcome (dependend variable). Either continuous or binary.
+    # N = Number of observations (real number)
+    # k = Number of covariates (real number). At least 10
+    # random_d = treatment assignment: (Either T for random assignment or F for confounding on X)
+    # theta = treatment effect: (Either real number for only one theta, or "binary" {0.1,0.3}, "con" for continuous values (0.1,0.3) or "big" for {1,0.4})
+    # var = Size of the variance (Noise-level)
+
     """
 
     def __init__(self):
         random.seed(10) # For debugging
-        self.N = 10
-        self.k = 10 # Sigma Dimension
+        self.N = 10 # Natural, number of observations
+        self.k = 10 # Natural, number of covariates
         self.p = 0.5
 
     def generate_outcome_variable(self):
@@ -83,17 +90,18 @@ class SimData:
 
         if bernoulli:
             m_0 = 0.5  # probability
-            
 
+        # Remains to be tested
         else:
-            print('bla')
             s = sequence(self.N)
             s_scaled = [1/ele for ele in s]
             a = X * s_scaled
 
+            # Frage an Daniel: Erwartungswert einer nichtlinear transformierten, normalverteilten ZV
+            # mit diminuierenden Gewichten.
             # Cheating expectation here! clarify!
-            a_mean = numpy.mean(a)
-            a_sigma = numpy.std(a)
+            a_mean = np.mean(a)
+            a_sigma = np.std(a)
             z = (a - a_mean) / a_sigma
             m_0 = random.multivariate_normal(z)  #  Phi() # normal distribution - need expectation of a here!
 
@@ -102,9 +110,9 @@ class SimData:
 
         return D
 
-    def generate_treatment_effect():
+    def generate_treatment_effect(X, option):
         """
-        options:
+        options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
         –Constant ( for all or for some people).
         –heterogeneity (discrete and continuous).
@@ -112,3 +120,10 @@ class SimData:
 
         :return:
         """
+
+        if option not in ['no treatment', 'constant', 'heterogeneity', 'negative']:
+            raise ValueError('Wrong Options')
+
+
+
+

@@ -3,5 +3,6 @@ from SimulateData import SimData
 if __name__ == "__main__":
     s = SimData()
     X = s.generate_covariates()
-    test = s.generate_treatment_assignment(X, bernoulli = True)
-    print(test)
+    D = s.generate_treatment_assignment(X, bernoulli = True) # returns treatment assigment vector [0,1,...]
+    print(D)
+    s.generate_treatment_effect(X, option = ['bla'])
