@@ -109,7 +109,7 @@ class SimData:
         # m_0 exists
         D = np.random.binomial(1, m_0, self.N)
 
-        return D, weight_vector
+        return D, np.array(weight_vector)
 
     def generate_treatment_effect(self, X, weight_vector, constant = True, heterogeneity = True,
                                   negative = False, no_treatment = False):
@@ -147,8 +147,8 @@ class SimData:
             # Rules for option 1: Theta_0 = constant  (c) with c = 0.2
             # X[:, r_idx == 1]
             con = 0.2 #  constat value for treatment effect
-            theta_option1 = X.copy()
-            theta_option1[:, r_idx == 1] = con
+            theta_fill = X.copy()
+            theta_fill[:, r_idx == 1] = con
 
 
         if heterogeneity:
@@ -159,13 +159,20 @@ class SimData:
             # theta_0 is to be at most 30% of the baseline outcome g_0(X)
 
             #(1) Trigonometric
-            X_option1 = X[:, r_idx == 1]
-            w = np.random.multivariate_normal(0, 0.25, np.shape(X_option1[0]))  # len(X_option1) should be length of rows of X
-            gamma = np.sin(np.dot(X_option1, weight_vector)) + w
+            X_option2 = theta_fill[:, r_idx == 2]
+            k_option2 = np.shape(X_option2)[0]
+            #cov_option2 = np.reshape(np.repeat(0.25, k_option2 * k_option2), (k_option2, k_option2))
+            w_cov = np.diag(np.repeat(0.25, k_option2))
+            w = np.random.multivariate_normal(np.zeros(k_option2), w_cov, 1)  # len(X_option1) should be length of rows of X
+
+            # Need to adjust weight_vector such that it complies with the alternated k (dimension)
+            weight_vector_adj = weight_vector[r_idx == 2]
+            gamma = np.sin(np.dot(X_option2, weight_vector_adj)) + w  # one gamma for each observation in n
 
             # (2) Standardize
             theta_option2 = standardize(gamma)
 
+            theta_fill[:, r_idx == 2]
 
 
 
@@ -173,7 +180,7 @@ class SimData:
 
 
        # To return
-        theta_0 = np.zeros(self.k)
+        # theta_0 = np.zeros(self.k)
 
 
 
