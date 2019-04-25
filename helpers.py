@@ -8,5 +8,5 @@ def sequence(upper_bound):
         #diff = 3 if diff == 1 else 1
     return res  #', '.join(res)
 
-a = sequence(10)
-print(a)
+#a = sequence(10)
+#print(a)
