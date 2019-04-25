@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from helpers import sequence
 from helpers import standardize
-from math import cos
+
 
 class SimData:
     """
@@ -89,14 +89,15 @@ class SimData:
         :return:
         """
 
+        s = sequence(self.N)
+        weight_vector = [1 / ele for ele in s]  # can adjust the weight vector such that the weights dont necessarily
+        # diminish, perhaps RVs
+
         if bernoulli:
             m_0 = 0.5  # probability
 
         # Remains to be tested
         else:
-            s = sequence(self.N)
-            weight_vector = [1/ele for ele in s] # can adjust the weight vector such that the weights dont necessarily
-            # diminish, perhaps RVs
             a = X * weight_vector
 
             # Using empirical mean, sd
@@ -110,7 +111,8 @@ class SimData:
 
         return D, weight_vector
 
-    def generate_treatment_effect(self, X, weight_vector,no_treament = False, constant = True, heterogeneity = False, negative = False):
+    def generate_treatment_effect(self, X, weight_vector, constant = True, heterogeneity = True,
+                                  negative = False, no_treatment = False):
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -121,40 +123,57 @@ class SimData:
         if not option in ['no treatment', 'constant', 'heterogeneity', 'negative']:
             raise ValueError('Wrong Options')
 
-        :return: Vector Theta, length self.k (covariates)
+        :return: Vector Theta, length self.k (covariates), theta_0
         """
+
+        # Process options
+        options = []
+        if constant:
+            options.append(1)
+        if heterogeneity:
+            options.append(2)
+        if negative:
+            options.append(3)
+        if no_treatment:
+            options.append(4)
 
         # Randomly assign single covariates to options
         #covariate_idx = list(range(1, self.k + 1))
-        r_idx = np.random.choice(a = [1, 2, 3, 4], size = self.k, replace = False) # option 1-4 assigned to cov.
+        r_idx = np.random.choice(a = options, size = self.k, replace = True) # option 1-4 assigned to cov.
 
-        # To fill
+
+        if constant:
+            # Assign option 1 to columns in covariates (dim(cov) = n * k)
+            # Rules for option 1: Theta_0 = constant  (c) with c = 0.2
+            # X[:, r_idx == 1]
+            con = 0.2 #  constat value for treatment effect
+            theta_option1 = X.copy()
+            theta_option1[:, r_idx == 1] = con
+
+
+        if heterogeneity:
+            # Option 2
+            # Rules:
+            # (1) Apply trigonometric function
+            # (2) Standardize the treatment effet within the interval [0.1, 0.3].
+            # theta_0 is to be at most 30% of the baseline outcome g_0(X)
+
+            #(1) Trigonometric
+            X_option1 = X[:, r_idx == 1]
+            w = np.random.multivariate_normal(0, 0.25, np.shape(X_option1[0]))  # len(X_option1) should be length of rows of X
+            gamma = np.sin(np.dot(X_option1, weight_vector)) + w
+
+            # (2) Standardize
+            theta_option2 = standardize(gamma)
+
+
+
+
+
+
+
+       # To return
         theta_0 = np.zeros(self.k)
-
-        # Assign option 1 to columns in covariates (dim(cov) = n * k)
-        # Rules for option 1: Theta_0 = constant  (c) with c = 0.2
-        # X[:, r_idx == 1]
-        con = 0.2 #  constat value for treatment effect
-        theta_option1[r_idx == 1] = con
-
-        # Option 2
-        # Rules:
-        # (1) Apply trigonometric function
-        # (2) Standardize the treatment effet within the interval [0.1, 0.3].
-        # theta_0 is to be at most 30% of the baseline outcome g_0(X)
-
-        #(1)
-        X_option1 = X[:, r_idx == 1]
-        w = np.random.multivariate_normal(0, 0.25, np.shape(X_option1[0]))  # len(X_option1) should be length of rows of X
-        gamma = sin(np.dot(X_option1, weight_vector)) + w
-
-        # (2)
-        theta_option2 = standardize(gamma)
-
-        
-
-
-
 
 
 

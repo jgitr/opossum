@@ -1,3 +1,5 @@
+import numpy as np
+
 def sequence(upper_bound):
     res = []
     diff = 1
