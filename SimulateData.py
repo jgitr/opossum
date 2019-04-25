@@ -3,6 +3,7 @@ from scipy import random, linalg
 import numpy as np
 import matplotlib.pyplot as plt
 from helpers import sequence
+from helpers import standardize
 from math import cos
 
 class SimData:
@@ -32,7 +33,7 @@ class SimData:
 
         """
 
-    def generate_covariates(self, plot = True, nonlinear = True):
+    def generate_covariates(self, plot = False, nonlinear = True):
 
         """
         Algorithm for Covariates
@@ -94,12 +95,11 @@ class SimData:
         # Remains to be tested
         else:
             s = sequence(self.N)
-            s_scaled = [1/ele for ele in s]
-            a = X * s_scaled
+            weight_vector = [1/ele for ele in s] # can adjust the weight vector such that the weights dont necessarily
+            # diminish, perhaps RVs
+            a = X * weight_vector
 
-            # Frage an Daniel: Erwartungswert einer nichtlinear transformierten, normalverteilten ZV
-            # mit diminuierenden Gewichten.
-            # Cheating expectation here! clarify!
+            # Using empirical mean, sd
             a_mean = np.mean(a)
             a_sigma = np.std(a)
             z = (a - a_mean) / a_sigma
@@ -108,9 +108,9 @@ class SimData:
         # m_0 exists
         D = np.random.binomial(1, m_0, self.N)
 
-        return D
+        return D, weight_vector
 
-    def generate_treatment_effect(X, option):
+    def generate_treatment_effect(self, X, weight_vector,no_treament = False, constant = True, heterogeneity = False, negative = False):
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -118,11 +118,44 @@ class SimData:
         –heterogeneity (discrete and continuous).
         –Even negative values seem realistic ( for some people).
 
-        :return:
+        if not option in ['no treatment', 'constant', 'heterogeneity', 'negative']:
+            raise ValueError('Wrong Options')
+
+        :return: Vector Theta, length self.k (covariates)
         """
 
-        if option not in ['no treatment', 'constant', 'heterogeneity', 'negative']:
-            raise ValueError('Wrong Options')
+        # Randomly assign single covariates to options
+        #covariate_idx = list(range(1, self.k + 1))
+        r_idx = np.random.choice(a = [1, 2, 3, 4], size = self.k, replace = False) # option 1-4 assigned to cov.
+
+        # To fill
+        theta_0 = np.zeros(self.k)
+
+        # Assign option 1 to columns in covariates (dim(cov) = n * k)
+        # Rules for option 1: Theta_0 = constant  (c) with c = 0.2
+        # X[:, r_idx == 1]
+        con = 0.2 #  constat value for treatment effect
+        theta_option1[r_idx == 1] = con
+
+        # Option 2
+        # Rules:
+        # (1) Apply trigonometric function
+        # (2) Standardize the treatment effet within the interval [0.1, 0.3].
+        # theta_0 is to be at most 30% of the baseline outcome g_0(X)
+
+        #(1)
+        X_option1 = X[:, r_idx == 1]
+        w = np.random.multivariate_normal(0, 0.25, np.shape(X_option1[0]))  # len(X_option1) should be length of rows of X
+        gamma = sin(np.dot(X_option1, weight_vector)) + w
+
+        # (2)
+        theta_option2 = standardize(gamma)
+
+        
+
+
+
+
 
 
 
