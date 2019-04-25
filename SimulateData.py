@@ -112,7 +112,7 @@ class SimData:
         return D, np.array(weight_vector)
 
     def generate_treatment_effect(self, X, weight_vector, constant = True, heterogeneity = True,
-                                  negative = False, no_treatment = False):
+                                  negative = True, no_treatment = True):
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -140,6 +140,13 @@ class SimData:
         # Randomly assign single covariates to options
         #covariate_idx = list(range(1, self.k + 1))
         r_idx = np.random.choice(a = options, size = self.k, replace = True) # option 1-4 assigned to cov.
+        n_idx = np.random.choice(options, self.N, True)
+
+        """
+        testl = []
+        for x in np.random.choice(3, 3, False):
+            testl.append(x)
+        """
 
 
         if constant:
@@ -148,7 +155,7 @@ class SimData:
             # X[:, r_idx == 1]
             con = 0.2 #  constat value for treatment effect
             theta_fill = X.copy()
-            theta_fill[:, r_idx == 1] = con
+
 
 
         if heterogeneity:
@@ -172,11 +179,30 @@ class SimData:
             # (2) Standardize
             theta_option2 = standardize(gamma)
 
-            theta_fill[:, r_idx == 2]
+        if negative:
+            theta_option3 = np.random.uniform(-1, 0, sum(r_idx == 3))
+
+        if no_treatment:
+            theta_option4 = np.zeros(sum(r_idx == 4))
 
 
+        # Capture all results and bind them: option1-4
+        theta_fill[np.ix_(n_idx == 1, r_idx == 1)] = con
+        theta_fill[n_idx == 2, r_idx == 2] = theta_option2
+        theta_fill[:, r_idx == 3] = theta_option3
+        theta_fill[:, r_idx == 4] = theta_option4
 
 
+"""
+        construction zone
+        make sure all can be executed for varying options.
+
+        assign theta only for certain observations!
+"""
+
+"""
+In the end theta is supposed to be a vector of length self.N with a result for each observation/human/participant
+"""
 
 
        # To return
