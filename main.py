@@ -1,4 +1,5 @@
 from SimulateData import SimData
+import numpy as np # necessary if predefined_idx is used in s.generate_treatment_effect
 
 if __name__ == "__main__":
     s = SimData(100,10)

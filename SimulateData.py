@@ -109,7 +109,7 @@ class SimData:
             a_sigma = np.std(a)
             z = (a - a_mean) / a_sigma          # normalizing 'a' vector
             
-            # using normalized vector z to get probabilities from normal pdf 
+            # using normalized vector z to get probabilities from normal pdf
             # to later assign treatment with binomial in D
             m_0 = stats.norm.cdf(z)
 
@@ -121,7 +121,7 @@ class SimData:
         # Output self.D n * 1 vector of 0 and 1
         # Output self.weight_vector k * 1
 
-    def generate_treatment_effect(self, constant = True, heterogeneity = True,
+    def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
                                   negative = True, no_treatment = True):
         """
         options Theta(X), where X are covariates:
@@ -129,6 +129,12 @@ class SimData:
         –Constant ( for all or for some people).
         –heterogeneity (discrete and continuous).
         –Even negative values seem realistic ( for some people).
+
+        -predefined_idx:
+        Instead of randomly assigning (drawing from a uniform distribution) the k covariates to an option,
+        the user can choose a predefined index set upon which he whishes to apply the options.
+        length = n
+        Must be array-like type
 
         if not option in ['no treatment', 'constant', 'heterogeneity', 'negative']:
             raise ValueError('Wrong Options')
@@ -151,7 +157,15 @@ class SimData:
             raise ValueError("At least one treatment effect option must be True")
         # assigning which individual gets which kind of treatment effect 
         # from options 1-4
-        n_idx = np.random.choice(options, self.N, True)
+        if predefined_idx is not None:
+            # Example
+            # s.generate_treatment_effect(predefined_idx=np.repeat(1, 100)) # in case of custom index
+            if len(predefined_idx) == self.N and isinstance(predefined_idx, (np.ndarray)):
+                n_idx = predefined_idx
+            else:
+                raise ValueError('Predefined Index must be ndarray and length of Predefined Index must be {}!'.format(self.N))
+        else:
+            n_idx = np.random.choice(options, self.N, True)
         
         # array to fill up with theta values         
         theta_combined = np.zeros(self.N)
