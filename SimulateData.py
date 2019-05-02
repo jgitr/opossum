@@ -41,7 +41,7 @@ class SimData:
         realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
         y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
 
-        return y
+        return y, self.X, realized_treatment_effect
 
     def generate_covariates(self, plot = False, nonlinear = True):
 
