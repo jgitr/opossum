@@ -2,8 +2,11 @@
 from scipy import random, stats
 import numpy as np
 import pandas as pd
+import seaborn as sns
+# %matplotlib inline
 import matplotlib.pyplot as plt
 from helpers import standardize
+
 
 
 class SimData:
@@ -135,9 +138,8 @@ class SimData:
         df = pd.DataFrame(self.X)
         corr = df.corr()
         corr.style.background_gradient(cmap='coolwarm') # requires HTML backend
-        plt.pcolor(corr)
-        plt.show()  # TODO: Legend
-
+        sns.heatmap(corr, annot = True)
+        plt.show()
         return None
 
     def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
