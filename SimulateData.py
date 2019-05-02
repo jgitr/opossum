@@ -110,7 +110,6 @@ class SimData:
             z = (a - a_mean) / a_sigma          # normalizing 'a' vector
             
             # using normalized vector z to get probabilities from normal pdf 
-            # (adjusted by 0.2 to get assignment of ~ 50%) 
             # to later assign treatment with binomial in D
             m_0 = stats.norm.cdf(z)
 
