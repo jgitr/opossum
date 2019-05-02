@@ -210,8 +210,16 @@ class SimData:
             theta_combined[n_idx == 4] = 0 # not really necessary since vector was full of 0 
         
         self.treatment_effect = theta_combined
+
         return None
-        
+
+    def generate_realized_treatment_effect(self):
+        """
+        :return:  Extract Treatment Effect where Treatment has been assigned
+        """
+
+        return self.get_treatment_effect() * self.get_treatment_assignment()
+
     def __str__(self):
         return "N = " + str(self.N) + ", k = " + str(self.k)
     
