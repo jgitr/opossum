@@ -1,6 +1,7 @@
 
 from scipy import random, stats
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from helpers import standardize
 
@@ -26,6 +27,7 @@ class SimData:
 
     def generate_outcome_variable(self):
         """
+        Model-wise Y
         options: binary, multilevel(discrete), continuous
 
 
@@ -35,6 +37,8 @@ class SimData:
     def generate_covariates(self, plot = False, nonlinear = True):
 
         """
+        Model-wise: g_0(X)
+
         Algorithm for Covariates
 
         1) Generate a random positive definite covariance matrix Sigma
@@ -60,7 +64,7 @@ class SimData:
         # 2)
         # Correlation Matrix P = Sigma * (1/sd)
         sd = 1  #  Frage an Daniel: Random, Intervall von 0 bis 1 oder was?
-        p = sigma * (1/sd)  # not used yet!
+        self.p = sigma * (1/sd)  # not used yet!
 
         # 3)
         mu = np.repeat(0, self.k)
@@ -120,6 +124,21 @@ class SimData:
         return None
         # Output self.D n * 1 vector of 0 and 1
         # Output self.weight_vector k * 1
+
+
+    def visualize_correlation(self):
+        """
+        Generates Correlation Matrix of the Covariates
+        :return:
+        """
+
+        df = pd.DataFrame(self.X)
+        corr = df.corr()
+        corr.style.background_gradient(cmap='coolwarm') # requires HTML backend
+        plt.pcolor(corr)
+        plt.show()  # TODO: Legend
+
+        return None
 
     def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
                                   negative = True, no_treatment = True):
@@ -215,10 +234,20 @@ class SimData:
 
     def generate_realized_treatment_effect(self):
         """
+        Model-wise: Theta_0 * D
         :return:  Extract Treatment Effect where Treatment has been assigned
         """
 
         return self.get_treatment_effect() * self.get_treatment_assignment()
+
+    def generate_noise(self):
+        """
+        model-wise: U or V
+        Restriction: Expectation must be zero conditional on X, D.
+        However, the expectation is independent anyways.
+        :return: One-dim. array of normally distributed rv with 0 and 1
+        """
+        return np.random.normal(0, 1, self.N)
 
     def __str__(self):
         return "N = " + str(self.N) + ", k = " + str(self.k)
