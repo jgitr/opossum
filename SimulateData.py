@@ -33,9 +33,15 @@ class SimData:
         Model-wise Y
         options: binary, multilevel(discrete), continuous
 
-
+        Y = Theta_0 * D + g_0(X) + U
+        D = m_0(X) + V
+        Theta_0 = t_0(Z) + W
 
         """
+        realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
+        y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
+
+        return y
 
     def generate_covariates(self, plot = False, nonlinear = True):
 
@@ -72,10 +78,11 @@ class SimData:
         # 3)
         mu = np.repeat(0, self.k)
         X = np.random.multivariate_normal(mu, sigma, self.N)
+        self.X = X
 
         if nonlinear:
             b = 1/np.arange(1,self.k+1) # diminishing weight vector
-            X = np.cos(X * b)  # overwrite with nonlinear covariates
+            g_0_X = np.cos(X * b)  # overwrite with nonlinear covariates
 
         if plot:
             plt.interactive(False)
@@ -83,7 +90,7 @@ class SimData:
             plt.ylabel('Test')
             plt.show(block=True)
         
-        self.X = X  # dim(X) = n * k
+        self.g_0_X = X  # dim(X) = n * k
         return None
 
 
@@ -109,7 +116,7 @@ class SimData:
         # issue: assigning just about 25% because of m_0's ~ [0,0.4]
         # solution: adding 0.2 to each probability m_0?
         else:
-            a = np.dot(self.X, weight_vector_alt)    # X*weights -> a (Nx1 vector) 
+            a = np.dot(self.X, weight_vector_alt)    # X*weights -> a (Nx1 vector)
 
             # Using empirical mean, sd
             a_mean = np.mean(a)
@@ -268,6 +275,9 @@ class SimData:
         
     def get_X(self):
         return self.X
+
+    def get_g_0_X(self):
+        reteurn self.g_0_X
 
     def get_treatment_assignment(self):
         return self.D
