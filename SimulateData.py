@@ -277,7 +277,7 @@ class SimData:
         return self.X
 
     def get_g_0_X(self):
-        reteurn self.g_0_X
+        return self.g_0_X
 
     def get_treatment_assignment(self):
         return self.D
