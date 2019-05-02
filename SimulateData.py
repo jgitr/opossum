@@ -3,8 +3,8 @@ from scipy import random, stats
 import numpy as np
 import pandas as pd
 import seaborn as sns
-# %matplotlib inline
 import matplotlib.pyplot as plt
+from sklearn.datasets import make_spd_matrix
 from helpers import standardize
 
 
@@ -23,7 +23,7 @@ class SimData:
     """
 
     def __init__(self, N, k):
-        random.seed(9) # For debugging
+        random.seed(8) # For debugging
         self.N = N # Natural, number of observations
         self.k = k # Natural, number of covariates
         #self.p = 0.5
@@ -67,12 +67,16 @@ class SimData:
 
         # 1)
         # Sigma
-        A = random.rand(self.k, self.k) # drawn from uniform distribution in [0,1]
-        sigma = np.dot(A,A.transpose()) # a matrix multiplied with its transposed is aaaalways positive definite
-
+        # A = random.rand(self.k, self.k) # drawn from uniform distribution in [0,1]
+        # sigma = np.dot(A,A.transpose()) # a matrix multiplied with its transposed is aaaalways positive definite
+        sigma = make_spd_matrix(self.k, self.k) # Achtung: Fuer Cluster gedacht, deswegen lustige properties
         # 2)
         # Correlation Matrix P = Sigma * (1/sd)
-        sd = 1  #  Frage an Daniel: Random, Intervall von 0 bis 1 oder was?
+        sd = 1
+        # Todo:  Frage an Daniel: Wahl der SD?
+        # Aktuell kriegen wir sehr hohe, positive Korrelationen aber
+        # 1. unrealistisch, 2. Multikollinearitaet und numerische Instabilitaet wenn wir Modelle fitten wollen.
+        # Ursache wsh. 1) durch A * A_transposed // versuchen zu fixen durch make_spd_matrix
         self.p = sigma * (1/sd)  # not used yet!
 
         # 3)
@@ -82,7 +86,10 @@ class SimData:
 
         if nonlinear:
             b = 1/np.arange(1,self.k+1) # diminishing weight vector
-            g_0_X = np.cos(X * b)  # overwrite with nonlinear covariates
+            self.g_0_X = np.cos(np.dot(X,b))**2  # overwrite with nonlinear covariates
+        else:
+            # If not nonlinear, then g_0(X) is just the identity
+            self.g_0_X = X  # dim(X) = n * k
 
         if plot:
             plt.interactive(False)
@@ -90,7 +97,7 @@ class SimData:
             plt.ylabel('Test')
             plt.show(block=True)
         
-        self.g_0_X = X  # dim(X) = n * k
+
         return None
 
 
@@ -142,7 +149,10 @@ class SimData:
         :return:
         """
 
-        df = pd.DataFrame(self.X)
+        df = pd.DataFrame(self.X)  # all highly correlated because essentially drawn from the same distribution
+        # and NOT nonlinear at this point.
+        # However, there should exist some negative correlation, too. This is obviously because all covariances have
+        # a positive sign.
         corr = df.corr()
         corr.style.background_gradient(cmap='coolwarm') # requires HTML backend
         sns.heatmap(corr, annot = True)
