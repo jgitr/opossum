@@ -18,10 +18,10 @@ class SimData:
 
     """
 
-    def __init__(self):
-        random.seed(10) # For debugging
-        self.N = 10 # Natural, number of observations
-        self.k = 5 # Natural, number of covariates
+    def __init__(self, N, k):
+        random.seed(9) # For debugging
+        self.N = N # Natural, number of observations
+        self.k = k # Natural, number of covariates
         self.p = 0.5
 
     def generate_outcome_variable(self):
@@ -75,12 +75,13 @@ class SimData:
             plt.hist(X, bins=10)
             plt.ylabel('Test')
             plt.show(block=True)
-
-        return X
+        
+        self.X = X
+        return None
 
 
 # maybe changing bernoulli=True to random=True to make it clear that the options are random/not random?
-    def generate_treatment_assignment(self, X, bernoulli = True):       
+    def generate_treatment_assignment(self, bernoulli = True):       
         
         """
         Treatment assignment
@@ -101,7 +102,7 @@ class SimData:
         # issue: assigning just about 25% because of m_0's ~ [0,0.4]
         # solution: adding 0.2 to each probability m_0?
         else:
-            a = np.dot(X, weight_vector_alt)    # X*weights -> a (Nx1 vector) 
+            a = np.dot(self.X, weight_vector_alt)    # X*weights -> a (Nx1 vector) 
 
             # Using empirical mean, sd
             a_mean = np.mean(a)
@@ -115,10 +116,13 @@ class SimData:
 
         # creating array out of binomial distribution that assigns treatment according to probability m_0
         D = np.random.binomial(1, m_0, self.N)
+        
+        self.D = D
+        self.weight_vector = weight_vector_alt
+        
+        return None
 
-        return D, weight_vector_alt, np.mean(m_0)
-
-    def generate_treatment_effect(self, X, weight_vector, constant = True, heterogeneity = False,
+    def generate_treatment_effect(self, constant = True, heterogeneity = False,
                                   negative = False, no_treatment = False):
         """
         options Theta(X), where X are covariates:
@@ -173,7 +177,7 @@ class SimData:
             r_idx = np.random.choice(options, size = self.k, replace = True)
             
             #(1) Trigonometric
-            X_option2 = X[:,r_idx == 2].copy()
+            X_option2 = self.X[:,r_idx == 2].copy()
             
             w = np.random.normal(0,0.25,self.N)
             # Need to adjust weight_vector such that it complies with the alternated k (dimension)
@@ -191,9 +195,34 @@ class SimData:
 
         if no_treatment:
             theta_combined[n_idx == 4] = 0 # not really necessary since vector was full of 0 
+        
+        self.treatment_effect = theta_combined
+        return None
+        
+    def __str__(self):
+        return "N = " + str(self.N) + ", k = " + str(self.k)
+    
+    def get_N(self):
+        return self.N
 
-        return theta_combined
+    def get_k(self):
+        return self.k
+    
+    def set_N(self, new_N):
+        self.N = new_N
 
+    def set_k(self, new_k):
+        self.k = new_k
+        
+    def get_X(self):
+        return self.X
+
+    def get_treatment_assignment(self):
+        return self.D
+    
+    def get_treatment_effect(self):
+        return self.treatment_effect
+    
 
 ##### still need to combine assigning and generation of treatment effects #####
 # theta_combined[D==1]
