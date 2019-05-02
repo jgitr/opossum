@@ -22,7 +22,7 @@ class SimData:
         random.seed(9) # For debugging
         self.N = N # Natural, number of observations
         self.k = k # Natural, number of covariates
-        self.p = 0.5
+        #self.p = 0.5
 
     def generate_outcome_variable(self):
         """
@@ -63,7 +63,7 @@ class SimData:
         p = sigma * (1/sd)  # not used yet!
 
         # 3)
-        mu = np.repeat(self.p, self.k)                      ##### why mu=0.5 not 0?
+        mu = np.repeat(0, self.k)
         X = np.random.multivariate_normal(mu, sigma, self.N)
 
         if nonlinear:
@@ -76,12 +76,12 @@ class SimData:
             plt.ylabel('Test')
             plt.show(block=True)
         
-        self.X = X
+        self.X = X  # dim(X) = n * k
         return None
 
 
 # maybe changing bernoulli=True to random=True to make it clear that the options are random/not random?
-    def generate_treatment_assignment(self, bernoulli = True):       
+    def generate_treatment_assignment(self, random = True):
         
         """
         Treatment assignment
@@ -95,7 +95,7 @@ class SimData:
         weight_vector_alt = np.random.uniform(0,1,self.k)   # random weights from U[0,1]
         
         # random treatment assignment
-        if bernoulli:
+        if random:
             m_0 = 0.5  # probability
 
         # treatment assignment depending on covariates 
@@ -112,18 +112,18 @@ class SimData:
             # using normalized vector z to get probabilities from normal pdf 
             # (adjusted by 0.2 to get assignment of ~ 50%) 
             # to later assign treatment with binomial in D
-            m_0 = stats.norm.pdf(z) + 0.2       
+            m_0 = stats.norm.cdf(z)
 
         # creating array out of binomial distribution that assigns treatment according to probability m_0
-        D = np.random.binomial(1, m_0, self.N)
-        
-        self.D = D
+        self.D = np.random.binomial(1, m_0, self.N)
         self.weight_vector = weight_vector_alt
         
         return None
+        # Output self.D n * 1 vector of 0 and 1
+        # Output self.weight_vector k * 1
 
-    def generate_treatment_effect(self, constant = True, heterogeneity = False,
-                                  negative = False, no_treatment = False):
+    def generate_treatment_effect(self, constant = True, heterogeneity = True,
+                                  negative = True, no_treatment = True):
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -181,7 +181,7 @@ class SimData:
             
             w = np.random.normal(0,0.25,self.N)
             # Need to adjust weight_vector such that it complies with the alternated k (dimension)
-            weight_vector_adj = weight_vector[r_idx == 2]
+            weight_vector_adj = self.weight_vector[r_idx == 2]
             
             gamma = np.sin(np.dot(X_option2, weight_vector_adj)) + w  # one gamma for each observation in n
 
