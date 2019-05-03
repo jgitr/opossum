@@ -296,6 +296,77 @@ class SimData:
         return self.treatment_effect
     
 
+
+##### New class that includes SimData class by initizilaizing it internally and 
+##### only displays a few simple functions to user
+
+class UserInterface:
+    '''
+    Class to wrap up all functionalities and give user just the functions that are 
+    necessary to create the wanted variables y, X, and treatment
+    '''
+    def __init__(self, N, k):
+        '''
+        Input:  N, Int with number of observations
+                k, Int with number of covariates 
+        
+        Initilizes UserInterface class with number of observations N and number of covariates k.
+        Generates Nxk matrix "X" with values for each covariate for all observations and saves 
+        it in object s
+        '''
+        self.s = SimData(N, k)
+        self.s.generate_covariates()
+        
+    def generate_treatment(self, random_assignment = True, constant = True, heterogeneous = True,
+                                  negative = True, no_treatment = True, predefined_idx = None):
+        '''
+        Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
+                or dependent on covariates
+                
+                constant, Boolean allow for constant treatment effect 
+                
+                heterogeneous, Boolean allow for heterogeneous treatment effects that 
+                depend on covariates
+                
+                negetive, Boolean allow treatment effects to be negetive, drawn from U[-1,0]
+                
+                no_treatment, Boolean allow treatment effect to be zero when assigned
+                
+                predefined_idx, Array-like object of length N, to assign treatment options individually 
+                with respectivly numbers 1 to 4 for constant to no_treatment 
+                
+        
+        Generates treatment assignment array "D" and treatment effect array "treatment_effect"
+        ans saves them as self. internal variables in s 
+        
+        return: None
+        '''
+        self.s.generate_treatment_assignment()
+        self.s.generate_treatment_effect(predefined_idx, constant, heterogeneous, 
+                                         negative, no_treatment)
+
+        return None
+
+    def output_data(self):
+        '''
+        Generates output array "y" the following way: Y = Theta_0 * D + g_0(X) + U,
+        where Theta_O is the treatment effect of each observation, D the dummy vector
+        for assigning treatment, g_0() the non_linear transformation function, and U
+        a normal-distributed noise-/error term
+        
+        return: y, X, treatment_effect
+         '''                
+        return self.s.generate_outcome_variable()
+    
+    def plot_covariates_correlation(self):
+        '''
+        Shows a correlation heatmap of the covariates 
+        '''
+        self.s.visualize_correlation()
+        return None
+
+
+
 ##### still need to combine assigning and generation of treatment effects #####
 # theta_combined[D==1]
 
@@ -311,16 +382,6 @@ class SimData:
     # dependence on some covariates or
     # All heterogenous effects and depending on all covariates
 
-"""
-        construction zone
-        make sure all can be executed for varying options.
-
-        assign theta only for certain observations!
-"""
-
-"""
-In the end theta is supposed to be a vector of length self.N with a result for each observation/human/participant
-"""
 
 
 
