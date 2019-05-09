@@ -28,7 +28,7 @@ class SimData:
         self.k = k # Natural, number of covariates
         #self.p = 0.5
 
-    def generate_outcome_variable(self):
+    def generate_outcome_variable(self, binary = True):
         """
         Model-wise Y
         options: binary, multilevel(discrete), continuous
@@ -38,10 +38,24 @@ class SimData:
         Theta_0 = t_0(Z) + W
 
         """
-        realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
-        y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
-
-        return y, self.X, realized_treatment_effect
+        
+        if not binary:
+            realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
+            y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
+        
+        if binary:
+            y = self.g_0_X + self.generate_noise()
+            y_probs = standardize(y, 0.1, 0.9)
+            realized_treatment_effect = self.generate_realized_treatment_effect() # needs to be a probability
+            y_probs += realized_treatment_effect
+            y_probs = np.clip(y_probs, 0, 1)
+            y = np.random.binomial(1, y_probs, self.N)
+            
+            
+        #??? binary: make y [0,1] and create treatment effect as probability and cut prob(y+tau) 
+        # to make them in a range of [0,1]
+        
+        return y, self.X, self.D, realized_treatment_effect
 
     def generate_covariates(self, plot = False, nonlinear = True):
 
@@ -101,8 +115,7 @@ class SimData:
         return None
 
 
-# maybe changing bernoulli=True to random=True to make it clear that the options are random/not random?
-    def generate_treatment_assignment(self, random = True):
+    def generate_treatment_assignment(self, random = True, assignment_prob = 0.5):
         
         """
         Treatment assignment
@@ -117,7 +130,7 @@ class SimData:
         
         # random treatment assignment
         if random:
-            m_0 = 0.5  # probability
+            m_0 = assignment_prob  # probability
 
         # treatment assignment depending on covariates 
         # issue: assigning just about 25% because of m_0's ~ [0,0.4]
@@ -159,8 +172,9 @@ class SimData:
         plt.show()
         return None
 
-    def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
-                                  negative = True, no_treatment = True):
+    def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = False,
+                                  negative = False, no_treatment = False):
+        #??? predefined_idx: Make it possible to choose percentage shares for each treatment type instead of indices
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -317,8 +331,8 @@ class UserInterface:
         self.s = SimData(N, k)
         self.s.generate_covariates()
         
-    def generate_treatment(self, random_assignment = True, constant = True, heterogeneous = True,
-                                  negative = True, no_treatment = True, predefined_idx = None):
+    def generate_treatment(self, random_assignment = True, constant = True, heterogeneous = False,
+                                  negative = False, no_treatment = False, predefined_idx = None):
         '''
         Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
                 or dependent on covariates
@@ -341,7 +355,7 @@ class UserInterface:
         
         return: None
         '''
-        self.s.generate_treatment_assignment()
+        self.s.generate_treatment_assignment(random_assignment)
         self.s.generate_treatment_effect(predefined_idx, constant, heterogeneous, 
                                          negative, no_treatment)
 
@@ -381,7 +395,6 @@ class UserInterface:
     # Either Some heterogenous effects and some others (non, constant, negative) and just 
     # dependence on some covariates or
     # All heterogenous effects and depending on all covariates
-
 
 
 
