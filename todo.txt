@@ -13,6 +13,8 @@ alpha_1 = 1/(1+exp(-Y + tau))
 tau_f = alpha_1 - alpha_0
 dann tau ca ~ N um 0.4
 
+
+
 # Modellausblick
 - Testen von Modellen auf den Daten: Modellguete messen, Ziel? Code verfuegbar?
 - Wie demonstrieren wir die Anwendung?
@@ -32,4 +34,11 @@ Bei verschiedenen Daten die Propensity Scores beobachten.
 
 # Matchinggruppe
 samantha sizemore und raiber alkurdi abquatschen wegen potential outcomes framework
+
+
+# Todo:
+- Binary Outcome
+- Propensity Score - random or not
+- Distributions
+- P-D-Matrix anpassen
 
