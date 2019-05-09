@@ -1,0 +1,35 @@
+# Modellstatus
+- Kovarianzmatrix (Cluster, A * t(A), idx)
+- Input/Output testen
+- todo: binary, multivariate output
+
+binary: Tau ueber die alphas neu berechnen oder direkt als probabiblity
+
+y ~ N(-3, sigma) # muss klein sein!
+tau ~ N(2, sigma)
+a_0 = log^-1(y) = 1/(1+exp(-y)) = P(Y=1)
+Y_0 = B(alpha_1)
+alpha_1 = 1/(1+exp(-Y + tau))
+tau_f = alpha_1 - alpha_0
+dann tau ca ~ N um 0.4
+
+# Modellausblick
+- Testen von Modellen auf den Daten: Modellguete messen, Ziel? Code verfuegbar?
+- Wie demonstrieren wir die Anwendung?
+
+
+# Praesifragen
+- Einfuehrung in das Thema? Potential Outcomes Framework
+- IPYNB / latex slides?
+- Tipps fuer Paper auf die wir unsere Daten anwenden koennen // Ergebnisvergleich
+- Code? Implementierung? 
+- Anwendung aus Usersicht
+
+
+# Ideen
+Bei verschiedenen Daten die Propensity Scores beobachten.
+
+
+# Matchinggruppe
+samantha sizemore und raiber alkurdi abquatschen wegen potential outcomes framework
+
