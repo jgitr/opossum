@@ -76,14 +76,16 @@ class SimData:
 
         sigma = np.dot(A, A.transpose())  # a matrix multiplied with its transposed is aaaalways positive definite
 
-        # sigma = make_spd_matrix(self.k, self.k) # Achtung: Fuer Cluster gedacht, deswegen lustige properties
+        # Positive Definite Check
+        def is_pos_def(x):
+            return np.all(np.linalg.eigvals(x) > 0)
+
+        if not is_pos_def(sigma):
+            raise ValueError('sigma is not positive definite!')
+
         # 2)
         # Correlation Matrix P = Sigma * (1/sd)
         sd = 1
-        # Todo:  Frage an Daniel: Wahl der SD?
-        # Aktuell kriegen wir sehr hohe, positive Korrelationen aber
-        # 1. unrealistisch, 2. Multikollinearitaet und numerische Instabilitaet wenn wir Modelle fitten wollen.
-        # Ursache wsh. 1) durch A * A_transposed // versuchen zu fixen durch make_spd_matrix
         self.p = sigma * (1/sd)  # not used yet!
 
         # 3)
