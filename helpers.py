@@ -6,3 +6,6 @@ def standardize(gamma, upper_val = 0.3, lower_val = 0.1):
     out = s * (upper_val - lower_val) + lower_val
 
     return out
+
+def is_pos_def(x):
+            return np.all(np.linalg.eigvals(x) > 0)
