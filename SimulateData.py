@@ -103,7 +103,7 @@ class SimData:
         return None
 
 
-    def generate_treatment_assignment(self, random = True, assignment_prob = 0.5):
+    def generate_treatment_assignment(self, random, assignment_prob):
         
         """
         Treatment assignment
@@ -165,9 +165,8 @@ class SimData:
         plt.show()
         return None
 
-    def generate_treatment_effect(self, treatment_option_weights = None, constant = True, heterogeneity = False,
-                                  negative = False, no_treatment = False):
-        #??? predefined_idx: Make it possible to choose percentage shares for each treatment type instead of indices
+    def generate_treatment_effect(self, treatment_option_weights, constant, heterogeneity,
+                                  negative, no_treatment):
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -353,7 +352,7 @@ class UserInterface:
         self.s = SimData(N, k)
         self.s.generate_covariates()
         
-    def generate_treatment(self, random_assignment = True, constant = True, heterogeneous = False,
+    def generate_treatment(self, random_assignment = True, assignment_prob = 0.5, constant = True, heterogeneous = False,
                                   negative = False, no_treatment = False, treatment_option_weights = None):
         '''
         Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
@@ -377,7 +376,7 @@ class UserInterface:
         
         return: None
         '''
-        self.s.generate_treatment_assignment(random_assignment)
+        self.s.generate_treatment_assignment(random_assignment, assignment_prob)
         self.s.generate_treatment_effect(treatment_option_weights, constant, heterogeneous, 
                                          negative, no_treatment)
 
@@ -402,9 +401,6 @@ class UserInterface:
         return None
 
 
-
-##### still need to combine assigning and generation of treatment effects #####
-# theta_combined[D==1]
 
 # Of the following goals, discrete heterogeneity is still missing
 # – No treatment effect (for all or for some people).
