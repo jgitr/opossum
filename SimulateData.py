@@ -22,12 +22,12 @@ class SimData:
     """
 
     def __init__(self, N, k):
-        random.seed(8) # For debugging
+        random.seed(10) # For debugging
         self.N = N # Natural, number of observations
         self.k = k # Natural, number of covariates
-        #self.p = 0.5
+        
 
-    def generate_outcome_variable(self, binary = True):
+    def generate_outcome_variable(self, binary):
         """
         Model-wise Y
         options: binary, multilevel(discrete), continuous
@@ -43,9 +43,13 @@ class SimData:
             y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
         
         if binary:
+            # generating y as probability between 0.1 and 0.9
             y = self.g_0_X + self.generate_noise()
             y_probs = standardize(y, 0.1, 0.9)
+            # generate treatment effect as probability
+#???        maybe standardize as well? Right now not necessary since all values are [0,1] anyway
             realized_treatment_effect = self.generate_realized_treatment_effect() # needs to be a probability
+            
             y_probs += realized_treatment_effect
             y_probs = np.clip(y_probs, 0, 1)
             y = np.random.binomial(1, y_probs, self.N)
@@ -97,8 +101,9 @@ class SimData:
             b = 1/np.arange(1,self.k+1) # diminishing weight vector
             self.g_0_X = np.cos(np.dot(X,b))**2  # overwrite with nonlinear covariates
         else:
-            # If not nonlinear, then g_0(X) is just the identity
-            self.g_0_X = X  # dim(X) = n * k
+            # If not nonlinear, then g_0(X) is just the identity 
+            
+            self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
 
         return None
 
@@ -276,9 +281,10 @@ class SimData:
             
             theta_combined[n_idx == 2] = theta_option2[n_idx == 2]
             
+        # negative effects between [-0.3,0]    
         if negative:
-            theta_combined[n_idx == 3] = np.random.uniform(-1, 0, np.sum(n_idx == 3))
-
+            theta_combined[n_idx == 3] = np.random.uniform(-0.3, 0, np.sum(n_idx == 3)) 
+            
         if no_treatment:
             theta_combined[n_idx == 4] = 0 # not really necessary since vector was full of 0 
         
@@ -382,7 +388,7 @@ class UserInterface:
 
         return None
 
-    def output_data(self):
+    def output_data(self, binary = False):
         '''
         Generates output array "y" the following way: Y = Theta_0 * D + g_0(X) + U,
         where Theta_O is the treatment effect of each observation, D the dummy vector
@@ -391,7 +397,7 @@ class UserInterface:
         
         return: y, X, treatment_effect
          '''                
-        return self.s.generate_outcome_variable()
+        return self.s.generate_outcome_variable(binary)
     
     def plot_covariates_correlation(self):
         '''

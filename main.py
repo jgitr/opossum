@@ -17,10 +17,11 @@ if specified use get function for g_0(x), D
 
 
 if __name__ == "__main__":
-    u = UserInterface(500,100)
+    u = UserInterface(500,10)
     u.generate_treatment()
     y, X, assignment, treatment = u.output_data()
-    #u.plot_covariates_correlation()    
+    u.plot_covariates_correlation()    
+
 
 
 
