@@ -42,3 +42,11 @@ samantha sizemore und raiber alkurdi abquatschen wegen potential outcomes framew
 - Distributions
 - P-D-Matrix anpassen
 
+
+# zum Vortrag:
+- Plots, u.a. Treatmenteffect, isnb. heterogen
+- Github ordnen/merges
+- Formeln in die Praesi
+- Inverse Propensity Score
+- 
+
