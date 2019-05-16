@@ -169,25 +169,28 @@ class SimData:
         plt.show()
         return None
 
-    def visualize_distributions(self, y, treatment):
+    def visualize_distribution(self, y, treatment):
         """
         input: outcome variable y_treated, y_not_treated, treatment
         :return: Depicts Output Distribution
         """
 
         # Add histogram data
-        x1 = y
-        x2 = treatment
+        x1 = y[self.D == 0]
+        x2 = y[self.D == 1]
+        #x2 = treatment
 
         # Group data together
         hist_data = [x1, x2]
 
-        group_labels = ['Group 1', 'Group 2']
+        group_labels = ['No Treatment Assignment', 'Treatment Assigment']
 
         # Create distplot with custom bin_size
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=[.1, .25, .5, 1])
+        bin_s = list(np.arange(-50, 50)/10)
+        fig = ff.create_distplot(hist_data, group_labels)#, bin_size = bin_s)
 
         # Plot!
+        # Adjust title, legend
         plt.interactive(False)
         return plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
 
