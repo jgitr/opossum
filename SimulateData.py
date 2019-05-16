@@ -6,9 +6,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 # from sklearn.datasets import make_spd_matrix
 from helpers import standardize
-import plotly.plotly as py
+#import plotly.plotly as py
 import plotly.figure_factory as ff
-
+import plotly
 
 class SimData:
     """
@@ -188,8 +188,9 @@ class SimData:
         fig = ff.create_distplot(hist_data, group_labels, bin_size=[.1, .25, .5, 1])
 
         # Plot!
-        p = py.plot(fig, filename='Distplot with Multiple Bin Sizes')
-        return p.show()
+        plt.interactive(False)
+        return plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
+
 
     def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
                                   negative = True, no_treatment = True):
