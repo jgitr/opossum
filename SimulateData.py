@@ -438,7 +438,7 @@ class UserInterface:
         :return:
         """
 
-        self.s.visualize_distributions(y, treatment)
+        self.s.visualize_distribution(y, treatment)
 
 # Of the following goals, discrete heterogeneity is still missing
 # – No treatment effect (for all or for some people).
