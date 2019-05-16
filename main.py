@@ -14,15 +14,14 @@ Correlation Matrix
 if specified use get function for g_0(x), D
 
 """
-# Todo: Create helper class, inherit all variables from global one, reduce amount of functions for the user
-# Todo: Test Model, try Powers Paper
 
 
 if __name__ == "__main__":
-    u = UserInterface(100,10)
+    u = UserInterface(500,10)
     u.generate_treatment()
-    y, X, treatment = u.output_data()
+    y, X, assignment, treatment = u.output_data()
     u.plot_covariates_correlation()    
+
     u.plot_distribution(y, treatment)
 
 #    s = SimData(5000,10)
@@ -36,6 +35,7 @@ if __name__ == "__main__":
     print('y: ', y)
     print('X:', X)
     print('treatment: ', treatment)
+
 
 
 
