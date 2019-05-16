@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import plotly.figure_factory as ff
+import plotly
 from helpers import standardize, is_pos_def
-
-
 
 class SimData:
     """
@@ -154,8 +154,6 @@ class SimData:
 #        plt.ylabel('Test')
 #        plt.show(block=True)
 
-
-
     def visualize_correlation(self):
         """
         Generates Correlation Matrix of the Covariates
@@ -170,8 +168,10 @@ class SimData:
         plt.show()
         return None
 
+
     def generate_treatment_effect(self, treatment_option_weights, constant, heterogeneity,
                                   negative, no_treatment):
+
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -336,6 +336,32 @@ class SimData:
     def get_treatment_effect(self):
         return self.treatment_effect
     
+    def visualize_distribution(self, y, treatment):
+        """
+        input: outcome variable y_treated, y_not_treated, treatment
+        :return: Depicts Output Distribution
+        """
+
+        # Add histogram data
+        x1 = y[self.D == 0]
+        x2 = y[self.D == 1]
+        #x2 = treatment
+
+        # Group data together
+        hist_data = [x1, x2]
+
+        group_labels = ['No Treatment Assignment', 'Treatment Assigment']
+
+        # Create distplot with custom bin_size
+        bin_s = list(np.arange(-50, 50)/10)
+        fig = ff.create_distplot(hist_data, group_labels)#, bin_size = bin_s)
+
+        # Plot!
+        # Adjust title, legend
+        plt.interactive(False)
+        return plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
+
+
 
 
 ##### New class that includes SimData class by initizilaizing it internally and 
@@ -406,7 +432,13 @@ class UserInterface:
         self.s.visualize_correlation()
         return None
 
+    def plot_distribution(self, y, treatment):
+        """
 
+        :return:
+        """
+
+        self.s.visualize_distributions(y, treatment)
 
 # Of the following goals, discrete heterogeneity is still missing
 # – No treatment effect (for all or for some people).

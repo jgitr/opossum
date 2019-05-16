@@ -22,7 +22,19 @@ if __name__ == "__main__":
     y, X, assignment, treatment = u.output_data()
     u.plot_covariates_correlation()    
 
+    u.plot_distribution(y, treatment)
 
+#    s = SimData(5000,10)
+#    s.generate_covariates()
+#    s.generate_treatment_assignment(False) # returns treatment assigment vector [0,1,...]
+#    s.generate_treatment_effect()
+#    correlation_heatmap = s.visualize_correlation()
+#
+#    # Output Triple
+#    out = s.generate_outcome_variable()
+    print('y: ', y)
+    print('X:', X)
+    print('treatment: ', treatment)
 
 
 
