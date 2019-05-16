@@ -21,8 +21,9 @@ class SimData:
 
     """
 
-    def __init__(self, N, k):
-        random.seed(10) # For debugging
+    def __init__(self, N, k, seed):
+        if seed is not None:
+            random.seed(seed) # For debugging
         self.N = N # Natural, number of observations
         self.k = k # Natural, number of covariates
         
@@ -138,6 +139,7 @@ class SimData:
             m_0 = stats.norm.cdf(z)
 
         # creating array out of binomial distribution that assigns treatment according to probability m_0
+        self.propensity_score = m_0
         self.D = np.random.binomial(1, m_0, self.N)
         self.weight_vector = weight_vector_alt
         
@@ -291,7 +293,6 @@ class SimData:
         self.treatment_effect = theta_combined
 
         return None
-
     def generate_realized_treatment_effect(self):
         """
         Model-wise: Theta_0 * D
@@ -335,17 +336,17 @@ class SimData:
     
     def get_treatment_effect(self):
         return self.treatment_effect
-    
     def visualize_distribution(self, y, treatment):
         """
         input: outcome variable y_treated, y_not_treated, treatment
-        :return: Depicts Output Distribution
-        """
-
+        :return: Depict
         # Add histogram data
+    
         x1 = y[self.D == 0]
         x2 = y[self.D == 1]
         #x2 = treatment
+s Output Distribution
+        """
 
         # Group data together
         hist_data = [x1, x2]
@@ -372,7 +373,7 @@ class UserInterface:
     Class to wrap up all functionalities and give user just the functions that are 
     necessary to create the wanted variables y, X, and treatment
     '''
-    def __init__(self, N, k):
+    def __init__(self, N, k, seed = None):
         '''
         Input:  N, Int with number of observations
                 k, Int with number of covariates 
@@ -381,7 +382,7 @@ class UserInterface:
         Generates Nxk matrix "X" with values for each covariate for all observations and saves 
         it in object s
         '''
-        self.s = SimData(N, k)
+        self.s = SimData(N, k, seed)
         self.s.generate_covariates()
         
     def generate_treatment(self, random_assignment = True, assignment_prob = 0.5, constant = True, heterogeneous = False,

@@ -1,7 +1,7 @@
 #from SimulateData import SimData
 #import numpy as np # necessary if predefined_idx is used in s.generate_treatment_effect
 from SimulateData import UserInterface
-
+from plots import *
 
 # Todo: Make this user friendly!
 """
@@ -17,25 +17,15 @@ if specified use get function for g_0(x), D
 
 
 if __name__ == "__main__":
-    u = UserInterface(500,10)
-    u.generate_treatment()
+    u = UserInterface(100,10, seed=19)
+    u.generate_treatment(random_assignment=False)
     y, X, assignment, treatment = u.output_data()
-    u.plot_covariates_correlation()    
-
-    u.plot_distribution(y, treatment)
-
-#    s = SimData(5000,10)
-#    s.generate_covariates()
-#    s.generate_treatment_assignment(False) # returns treatment assigment vector [0,1,...]
-#    s.generate_treatment_effect()
-#    correlation_heatmap = s.visualize_correlation()
+#    u.plot_covariates_correlation()    
 #
-#    # Output Triple
-#    out = s.generate_outcome_variable()
-    print('y: ', y)
-    print('X:', X)
-    print('treatment: ', treatment)
+#    u.plot_distribution(y, treatment)
 
+    histogram(u.s.propensity_score)
+ 
 
 
 
