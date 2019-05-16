@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_spd_matrix
+# from sklearn.datasets import make_spd_matrix
 from helpers import standardize
-
+import plotly.plotly as py
+import plotly.figure_factory as ff
 
 
 class SimData:
@@ -167,6 +168,28 @@ class SimData:
         sns.heatmap(corr, annot = True)
         plt.show()
         return None
+
+    def visualize_distributions(self, y, treatment):
+        """
+        input: outcome variable y_treated, y_not_treated, treatment
+        :return: Depicts Output Distribution
+        """
+
+        # Add histogram data
+        x1 = y
+        x2 = treatment
+
+        # Group data together
+        hist_data = [x1, x2]
+
+        group_labels = ['Group 1', 'Group 2']
+
+        # Create distplot with custom bin_size
+        fig = ff.create_distplot(hist_data, group_labels, bin_size=[.1, .25, .5, 1])
+
+        # Plot!
+        p = py.plot(fig, filename='Distplot with Multiple Bin Sizes')
+        return p.show()
 
     def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
                                   negative = True, no_treatment = True):
@@ -374,7 +397,13 @@ class UserInterface:
         self.s.visualize_correlation()
         return None
 
+    def plot_distribution(self, y, treatment):
+        """
 
+        :return:
+        """
+
+        self.s.visualize_distributions(y, treatment)
 
 ##### still need to combine assigning and generation of treatment effects #####
 # theta_combined[D==1]
