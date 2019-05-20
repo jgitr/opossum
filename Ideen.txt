@@ -1,0 +1,8 @@
+Ideen
+
+- Treatment effect Größe anpassbar machen?
+	Im Moment: zwischen -0.3 und 0.3 vielleicht zu klein für contiunous case?
+	(Bei Intervall von etwa [-3,4]
+
+- treatment assignment, option not-random: Im Moment immer etwa 50% assginment
+	Option zur Anpassung hinzufügen?

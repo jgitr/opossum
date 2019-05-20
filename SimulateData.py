@@ -99,7 +99,8 @@ class SimData:
         self.X = X
 
         if nonlinear:
-            b = 1/np.arange(1,self.k+1) # diminishing weight vector
+#            b = 1/np.arange(1,self.k+1) # diminishing weight vector
+            b = np.random.uniform(0,1,self.k) # random weight vector drawn from U[0,1]
             self.g_0_X = np.cos(np.dot(X,b))**2  # overwrite with nonlinear covariates
         else:
             # If not nonlinear, then g_0(X) is just the identity 
@@ -125,7 +126,9 @@ class SimData:
         # random treatment assignment
         if random:
             m_0 = assignment_prob  # probability
-
+            
+            # propensity scores for each observation 
+            self.propensity_score = np.repeat(m_0,self.N)
         else:
             a = np.dot(self.X, weight_vector_alt)    # X*weights -> a (Nx1 vector)
 
@@ -137,9 +140,11 @@ class SimData:
             # using normalized vector z to get probabilities from normal pdf
             # to later assign treatment with binomial in D
             m_0 = stats.norm.cdf(z)
+            
+            # propensity scores for each observation 
+            self.propensity_score = m_0
 
         # creating array out of binomial distribution that assigns treatment according to probability m_0
-        self.propensity_score = m_0
         self.D = np.random.binomial(1, m_0, self.N)
         self.weight_vector = weight_vector_alt
         
@@ -345,7 +350,7 @@ class SimData:
         x1 = y[self.D == 0]
         x2 = y[self.D == 1]
         #x2 = treatment
-s Output Distribution
+        s Output Distribution
         """
 
         # Group data together
