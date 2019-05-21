@@ -108,6 +108,8 @@ u.plot_covariates_correlation()
 ![png](presentation_simulated_dgp_files/presentation_simulated_dgp_12_0.png)
 
 
+<img src="propensity_score_plot.png">
+
 
 ```python
 import numpy as np
