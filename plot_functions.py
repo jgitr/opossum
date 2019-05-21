@@ -100,7 +100,7 @@ def all_treatment_effect_plt(treatment_list, assignment_list):
     ax[0,1].set_xlim([-0.3,0.3])
     ax[1,0].set_xlim([-0.3,0.3])
     ax[1,1].set_xlim([-0.3,0.3])
-    
+      
 #    fig.suptitle('Different kinds of treatment effects')
 
     sns.despine(left=True)
@@ -131,11 +131,15 @@ def all_treatment_effect_plt(treatment_list, assignment_list):
     plt.tight_layout()
 
 
-def output_difference_plt(y_not_treated, y_treated): 
+def output_difference_plt(y_not_treated, y_treated, binary = False): 
     fig, axes = plt.subplots(1,1)
     
-    axes.set_title('Output distributions of treated and not treated observations')
-#    axes[1].set_title('Output distribution of treated observations')
+    if binary:
+        axes.set_title('Binary output distributions')
+    else:
+        axes.set_title('Continuous Output distributions')
+    
+
     
     axes.set_ylabel('Density')
     axes.set_xlabel('y')
@@ -156,8 +160,71 @@ def output_difference_plt(y_not_treated, y_treated):
     
     sns.despine(right=True, top=True)
     
+    if binary:
+        plt.setp(axes, xticks=[0,1])
+    
     plt.tight_layout()
 
+def avg_treatment_effect_plt(treatment_list, assignment_list, ate_list):
+    
+    only_treat_list = []
+    for i in range(4):
+        only_treat = treatment_list[i][assignment_list[i]==1]
+        only_treat_list.append(only_treat)
+    
+    fig, ax = plt.subplots(2,2, figsize=(7.5,6), sharex=False)
+    
+
+    ax[0,0].set_title('Constant')
+    ax[0,1].set_title('Positive/Negative')
+    ax[1,0].set_title('Mixed')
+    ax[1,1].set_title('Mostly none')
+    
+    ax[0,0].set_xlabel('Size of treatment effect')
+    ax[0,1].set_xlabel('Size of treatment effect')
+    ax[1,0].set_xlabel('Size of treatment effect')
+    ax[1,1].set_xlabel('Size of treatment effect')
+  
+    
+    ax[0,0].set_xlim([-0.3,0.3])
+    ax[0,1].set_xlim([-0.3,0.3])
+    ax[1,0].set_xlim([-0.3,0.3])
+    ax[1,1].set_xlim([-0.3,0.3])
+    
+    ax[0,0].axvline(ate_list[0], 0, len(treatment_list), linewidth=4, color='r')
+    ax[0,1].axvline(ate_list[1], 0, len(treatment_list), linewidth=4, color='r')
+    ax[1,0].axvline(ate_list[2], 0, len(treatment_list), linewidth=4, color='r')
+    ax[1,1].axvline(ate_list[3], 0, len(treatment_list), linewidth=4, color='r')
+    
+    
+#    fig.suptitle('Different kinds of treatment effects')
+
+    sns.despine(left=True)
+    
+    sns.distplot(only_treat_list[0], ax = ax[0,0], hist=True, kde=False, 
+         bins=15, color = 'darkblue', 
+         hist_kws={'edgecolor':'black'},
+         kde_kws={'linewidth': 4})
+
+    sns.distplot(only_treat_list[1], ax = ax[0,1], hist=True, kde=False, 
+         bins=10, color = 'darkred', 
+         hist_kws={'edgecolor':'black'},
+         kde_kws={'linewidth': 4})
+
+    sns.distplot(only_treat_list[2], ax = ax[1,0], hist=True, kde=False, 
+         bins=15, color = 'darkgreen', 
+         hist_kws={'edgecolor':'black'},
+         kde_kws={'linewidth': 4})
+
+    sns.distplot(only_treat_list[3], ax = ax[1,1], hist=True, kde=False, 
+         bins=9, color = 'gold', 
+         hist_kws={'edgecolor':'black'},
+         kde_kws={'linewidth': 4})
+    
+    plt.setp(ax, yticks=[])
+    
+    plt.subplots_adjust(top=2)
+    plt.tight_layout()
 
 
 

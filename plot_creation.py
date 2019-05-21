@@ -1,5 +1,5 @@
 from SimulateData import UserInterface
-from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt 
+from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
@@ -74,9 +74,12 @@ single_treatment_effect_plt(treatment, assignment,
 ##### Output differences treated/not_treated plots
 
 ### continous 
-u = UserInterface(10000,10, seed=1242)
+u = UserInterface(10000,10, seed=7)
 u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 1, 0, 0])
 y, X, assignment, treatment = u.output_data(False)
+
+treatment_list.append(treatment)
+assignment_list.append(assignment)
 
 y_treated = y[assignment==1]
 y_not_treated = y[assignment==0]
@@ -88,17 +91,81 @@ u = UserInterface(10000,10, seed=15)
 u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 1, 0, 0])
 y, X, assignment, treatment = u.output_data(True)
 
+
+
 y_treated = y[assignment==1]
 y_not_treated = y[assignment==0]
 
-output_difference_plt(y_not_treated, y_treated)
+output_difference_plt(y_not_treated, y_treated, binary = True)
+
+##### ATE examples
+
+treatment_list = []
+assignment_list = []
+
+# constant
+u = UserInterface(10000,10, seed=15)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [1, 0, 0, 0])
+y, X, assignment, treatment = u.output_data(True)
+
+treatment_list.append(treatment)
+assignment_list.append(assignment)
+
+ate_constant = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
+
+# positive negative
+u = UserInterface(10000,10, seed=15)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0.5, 0, 0.5, 0])
+y, X, assignment, treatment = u.output_data(True)
+
+treatment_list.append(treatment)
+assignment_list.append(assignment)
+
+ate_pos_neg = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
+
+# all mixed
+u = UserInterface(10000,10, seed=15)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0.2, 0.5, 0.1, 0.2])
+y, X, assignment, treatment = u.output_data(True)
+
+treatment_list.append(treatment)
+assignment_list.append(assignment)
+
+ate_mix = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
+
+# 80% no effect
+u = UserInterface(10000,10, seed=15)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0.2, 0, 0.8])
+y, X, assignment, treatment = u.output_data(True)
+
+treatment_list.append(treatment)
+assignment_list.append(assignment)
+
+ate_non = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
+
+
+ate_list = [ate_constant, ate_pos_neg, ate_mix, ate_non]
+
+avg_treatment_effect_plt(treatment_list, assignment_list, ate_list)
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+#
 ###### Inverse probability weighting
 #u = UserInterface(10000,10, seed=12)
-#u.generate_treatment(random_assignment=False, treatment_option_weights = [1, 0, 0, 0])
+#u.generate_treatment(random_assignment=True, treatment_option_weights = [1, 0, 0, 0])
 #y, X, assignment, treatment = u.output_data(False)
 #
 #
@@ -127,7 +194,7 @@ output_difference_plt(y_not_treated, y_treated)
 #    
 #    return tau
 #
-#ipw_ate_estimate = inverse_probability_weighting(prop_score_predictions, assignment, y)
+#ipw_ate_estimate = inverse_probability_weighting(u.s.propensity_score, assignment, y)
 #
 #simple_ate_estimate = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
 
