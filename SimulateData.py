@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_spd_matrix
-from helpers import standardize
-
-
+import plotly.figure_factory as ff
+import plotly
+from helpers import standardize, is_pos_def
 
 class SimData:
     """
@@ -22,13 +21,14 @@ class SimData:
 
     """
 
-    def __init__(self, N, k):
-        random.seed(8) # For debugging
+    def __init__(self, N, k, seed):
+        if seed is not None:
+            random.seed(seed) # For debugging
         self.N = N # Natural, number of observations
         self.k = k # Natural, number of covariates
-        #self.p = 0.5
+        
 
-    def generate_outcome_variable(self):
+    def generate_outcome_variable(self, binary):
         """
         Model-wise Y
         options: binary, multilevel(discrete), continuous
@@ -38,12 +38,27 @@ class SimData:
         Theta_0 = t_0(Z) + W
 
         """
-        realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
-        y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
+        
+        if not binary:
+            realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
+            y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
+        
+        if binary:
+            # generating y as probability between 0.1 and 0.9
+            y = self.g_0_X + self.generate_noise()
+            y_probs = standardize(y, 0.1, 0.9)
+            # generate treatment effect as probability
+#???        maybe standardize as well? Right now not necessary since all values are [0,1] anyway
+            realized_treatment_effect = self.generate_realized_treatment_effect() # needs to be a probability
+            
+            y_probs += realized_treatment_effect
+            y_probs = np.clip(y_probs, 0, 1)
+            y = np.random.binomial(1, y_probs, self.N)
+            
+              
+        return y, self.X, self.D, realized_treatment_effect
 
-        return y, self.X, realized_treatment_effect
-
-    def generate_covariates(self, plot = False, nonlinear = True):
+    def generate_covariates(self, nonlinear = True):
 
         """
         Model-wise: g_0(X)
@@ -53,10 +68,7 @@ class SimData:
         1) Generate a random positive definite covariance matrix Sigma
         based on a uniform distribution over the space k*k of the correlation matrix
 
-        2) Scale the covariance matrix. This equals the correlation matrix and can be seen as
-        the covariance matrix of the standardized random variables sigma = x / sd(x)
-
-        3) Generate random normal distributed variables X_{N*k} with mean = 0 and variance = sigma
+        2) Generate random normal distributed variables X_{N*k} with mean = 0 and variance = sigma
 
         Create low- and high-dimensional dataset.
          Correlation between the covariates isrealistic.
@@ -67,19 +79,21 @@ class SimData:
 
         # 1)
         # Sigma
-        # A = random.rand(self.k, self.k) # drawn from uniform distribution in [0,1]
-        # sigma = np.dot(A,A.transpose()) # a matrix multiplied with its transposed is aaaalways positive definite
-        sigma = make_spd_matrix(self.k, self.k) # Achtung: Fuer Cluster gedacht, deswegen lustige properties
-        # 2)
-        # Correlation Matrix P = Sigma * (1/sd)
-        sd = 1
-        # Todo:  Frage an Daniel: Wahl der SD?
-        # Aktuell kriegen wir sehr hohe, positive Korrelationen aber
-        # 1. unrealistisch, 2. Multikollinearitaet und numerische Instabilitaet wenn wir Modelle fitten wollen.
-        # Ursache wsh. 1) durch A * A_transposed // versuchen zu fixen durch make_spd_matrix
-        self.p = sigma * (1/sd)  # not used yet!
+        A = random.rand(self.k, self.k) # drawn from uniform distribution in [0,1]
 
-        # 3)
+        # Make sure negative covariance exists, too.
+        overlay_matrix = np.random.randint(2, size=(self.k, self.k))  # set -1 where 0
+        overlay_matrix[overlay_matrix == 0] = -1
+        A = A * overlay_matrix
+
+        sigma = np.dot(A, A.transpose())  # a matrix multiplied with its transposed is aaaalways positive definite
+
+        # Positive Definite Check
+        if not is_pos_def(sigma):
+            raise ValueError('sigma is not positive definite!')
+
+
+        # 2)
         mu = np.repeat(0, self.k)
         X = np.random.multivariate_normal(mu, sigma, self.N)
         self.X = X
@@ -88,21 +102,14 @@ class SimData:
             b = 1/np.arange(1,self.k+1) # diminishing weight vector
             self.g_0_X = np.cos(np.dot(X,b))**2  # overwrite with nonlinear covariates
         else:
-            # If not nonlinear, then g_0(X) is just the identity
-            self.g_0_X = X  # dim(X) = n * k
-
-        if plot:
-            plt.interactive(False)
-            plt.hist(X, bins=10)
-            plt.ylabel('Test')
-            plt.show(block=True)
-        
+            # If not nonlinear, then g_0(X) is just the identity 
+            
+            self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
 
         return None
 
 
-# maybe changing bernoulli=True to random=True to make it clear that the options are random/not random?
-    def generate_treatment_assignment(self, random = True):
+    def generate_treatment_assignment(self, random, assignment_prob):
         
         """
         Treatment assignment
@@ -117,11 +124,8 @@ class SimData:
         
         # random treatment assignment
         if random:
-            m_0 = 0.5  # probability
+            m_0 = assignment_prob  # probability
 
-        # treatment assignment depending on covariates 
-        # issue: assigning just about 25% because of m_0's ~ [0,0.4]
-        # solution: adding 0.2 to each probability m_0?
         else:
             a = np.dot(self.X, weight_vector_alt)    # X*weights -> a (Nx1 vector)
 
@@ -135,13 +139,22 @@ class SimData:
             m_0 = stats.norm.cdf(z)
 
         # creating array out of binomial distribution that assigns treatment according to probability m_0
+        self.propensity_score = m_0
         self.D = np.random.binomial(1, m_0, self.N)
         self.weight_vector = weight_vector_alt
         
         return None
-        # Output self.D n * 1 vector of 0 and 1
-        # Output self.weight_vector k * 1
 
+##??? Removed plotting function from covariates function and created extra plotting function
+## BUT: Seems useless right now, either create useful plot or remove function
+#    def plot_covariates(self):
+#        '''
+#        
+#        '''
+#        plt.interactive(False)
+#        plt.hist(self.X, bins=10)
+#        plt.ylabel('Test')
+#        plt.show(block=True)
 
     def visualize_correlation(self):
         """
@@ -149,18 +162,18 @@ class SimData:
         :return:
         """
 
-        df = pd.DataFrame(self.X)  # all highly correlated because essentially drawn from the same distribution
-        # and NOT nonlinear at this point.
-        # However, there should exist some negative correlation, too. This is obviously because all covariances have
-        # a positive sign.
+        df = pd.DataFrame(self.X)  
+        
         corr = df.corr()
         corr.style.background_gradient(cmap='coolwarm') # requires HTML backend
         sns.heatmap(corr, annot = True)
         plt.show()
         return None
 
-    def generate_treatment_effect(self, predefined_idx = None, constant = True, heterogeneity = True,
-                                  negative = True, no_treatment = True):
+
+    def generate_treatment_effect(self, treatment_option_weights, constant, heterogeneity,
+                                  negative, no_treatment):
+
         """
         options Theta(X), where X are covariates:
         –No treatment effect(for all or for some people).
@@ -180,6 +193,42 @@ class SimData:
         :return: Vector Theta, length self.k (covariates), theta_0
         """
 
+        # ratio list: [constant, heterogeneity, negative, no_treatment] (treatment_option_weights)
+        # e.g. [0, 0.5, 0.1, 0.4], needs to sum up to 1 
+        
+        if treatment_option_weights is not None:            
+            # make sure it's a numpy array
+            treatment_option_weights = np.array(treatment_option_weights)
+            if np.sum(treatment_option_weights) !=1:
+                raise ValueError('Values in treatment_option_weights-vector must sum up to 1')
+            if len(treatment_option_weights) !=4:
+                raise ValueError('Treatment_option_weights-vector must be of length 4')
+            
+            
+            # take times N to get absolute number of each option
+            absolute_ratio = (self.N*treatment_option_weights).astype(int)
+            
+            # adjusting possible rounding errors by increasing highest value 
+            if sum(absolute_ratio) < self.N:
+                index_max = np.argmax(treatment_option_weights)
+                absolute_ratio[index_max] = absolute_ratio[index_max] + (self.N-sum(absolute_ratio))
+            
+            # fill up index-array with options 1-4 according to the weights
+            weight_ratio_index = np.zeros((self.N,))
+            counter = 0
+            for i in range(len(absolute_ratio)):
+                weight_ratio_index[counter:counter+absolute_ratio[i],] = i+1
+                counter += absolute_ratio[i]
+            # shuffle 
+            np.random.shuffle(weight_ratio_index)
+            
+            n_idx = weight_ratio_index
+            
+            # overwriting booleans according to given treatment_option_weights             
+            options_boolean = treatment_option_weights > 0
+            
+            constant, heterogeneity, negative, no_treatment = tuple(options_boolean)
+            
         # Process options
         options = []
         if constant:
@@ -191,20 +240,13 @@ class SimData:
         if no_treatment:
             options.append(4)
         
-        if options ==[]:
-            raise ValueError("At least one treatment effect option must be True")
-        # assigning which individual gets which kind of treatment effect 
-        # from options 1-4
-        if predefined_idx is not None:
-            # Example
-            # s.generate_treatment_effect(predefined_idx=np.repeat(1, 100)) # in case of custom index
-            if len(predefined_idx) == self.N and isinstance(predefined_idx, (np.ndarray)):
-                n_idx = predefined_idx
-            else:
-                raise ValueError('Predefined Index must be ndarray and length of Predefined Index must be {}!'.format(self.N))
-        else:
+        if treatment_option_weights is None:
+            if options ==[]:
+                raise ValueError("At least one treatment effect option must be True")
+            # assigning which individual gets which kind of treatment effect 
+            # from options 1-4
             n_idx = np.random.choice(options, self.N, True)
-        
+            
         # array to fill up with theta values         
         theta_combined = np.zeros(self.N)
         
@@ -241,16 +283,16 @@ class SimData:
             
             theta_combined[n_idx == 2] = theta_option2[n_idx == 2]
             
+        # negative effects between [-0.3,0]    
         if negative:
-            theta_combined[n_idx == 3] = np.random.uniform(-1, 0, np.sum(n_idx == 3))
-
+            theta_combined[n_idx == 3] = np.random.uniform(-0.3, 0, np.sum(n_idx == 3)) 
+            
         if no_treatment:
             theta_combined[n_idx == 4] = 0 # not really necessary since vector was full of 0 
         
         self.treatment_effect = theta_combined
 
         return None
-
     def generate_realized_treatment_effect(self):
         """
         Model-wise: Theta_0 * D
@@ -294,7 +336,33 @@ class SimData:
     
     def get_treatment_effect(self):
         return self.treatment_effect
+    def visualize_distribution(self, y, treatment):
+        """
+        input: outcome variable y_treated, y_not_treated, treatment
+        :return: Depict
+        # Add histogram data
     
+        x1 = y[self.D == 0]
+        x2 = y[self.D == 1]
+        #x2 = treatment
+s Output Distribution
+        """
+
+        # Group data together
+        hist_data = [x1, x2]
+
+        group_labels = ['No Treatment Assignment', 'Treatment Assigment']
+
+        # Create distplot with custom bin_size
+        bin_s = list(np.arange(-50, 50)/10)
+        fig = ff.create_distplot(hist_data, group_labels)#, bin_size = bin_s)
+
+        # Plot!
+        # Adjust title, legend
+        plt.interactive(False)
+        return plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
+
+
 
 
 ##### New class that includes SimData class by initizilaizing it internally and 
@@ -305,7 +373,7 @@ class UserInterface:
     Class to wrap up all functionalities and give user just the functions that are 
     necessary to create the wanted variables y, X, and treatment
     '''
-    def __init__(self, N, k):
+    def __init__(self, N, k, seed = None):
         '''
         Input:  N, Int with number of observations
                 k, Int with number of covariates 
@@ -314,11 +382,11 @@ class UserInterface:
         Generates Nxk matrix "X" with values for each covariate for all observations and saves 
         it in object s
         '''
-        self.s = SimData(N, k)
+        self.s = SimData(N, k, seed)
         self.s.generate_covariates()
         
-    def generate_treatment(self, random_assignment = True, constant = True, heterogeneous = True,
-                                  negative = True, no_treatment = True, predefined_idx = None):
+    def generate_treatment(self, random_assignment = True, assignment_prob = 0.5, constant = True, heterogeneous = False,
+                                  negative = False, no_treatment = False, treatment_option_weights = None):
         '''
         Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
                 or dependent on covariates
@@ -332,8 +400,8 @@ class UserInterface:
                 
                 no_treatment, Boolean allow treatment effect to be zero when assigned
                 
-                predefined_idx, Array-like object of length N, to assign treatment options individually 
-                with respectivly numbers 1 to 4 for constant to no_treatment 
+                treatment_option_weights, List-like object of length 4, with corresponding weights 
+                summing up to 1 [constant, heterogeneous, negative, no_treatment], e.g. [0, 0.5, 0.1, 0.4]
                 
         
         Generates treatment assignment array "D" and treatment effect array "treatment_effect"
@@ -341,13 +409,13 @@ class UserInterface:
         
         return: None
         '''
-        self.s.generate_treatment_assignment()
-        self.s.generate_treatment_effect(predefined_idx, constant, heterogeneous, 
+        self.s.generate_treatment_assignment(random_assignment, assignment_prob)
+        self.s.generate_treatment_effect(treatment_option_weights, constant, heterogeneous, 
                                          negative, no_treatment)
 
         return None
 
-    def output_data(self):
+    def output_data(self, binary = False):
         '''
         Generates output array "y" the following way: Y = Theta_0 * D + g_0(X) + U,
         where Theta_O is the treatment effect of each observation, D the dummy vector
@@ -356,7 +424,7 @@ class UserInterface:
         
         return: y, X, treatment_effect
          '''                
-        return self.s.generate_outcome_variable()
+        return self.s.generate_outcome_variable(binary)
     
     def plot_covariates_correlation(self):
         '''
@@ -365,10 +433,13 @@ class UserInterface:
         self.s.visualize_correlation()
         return None
 
+    def plot_distribution(self, y, treatment):
+        """
 
+        :return:
+        """
 
-##### still need to combine assigning and generation of treatment effects #####
-# theta_combined[D==1]
+        self.s.visualize_distribution(y, treatment)
 
 # Of the following goals, discrete heterogeneity is still missing
 # – No treatment effect (for all or for some people).
@@ -381,7 +452,6 @@ class UserInterface:
     # Either Some heterogenous effects and some others (non, constant, negative) and just 
     # dependence on some covariates or
     # All heterogenous effects and depending on all covariates
-
 
 
 
