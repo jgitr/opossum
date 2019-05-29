@@ -61,7 +61,7 @@ def single_treatment_effect_plt(treatment, assignment, title):
     
     ax.set_title(title)
     ax.set_xlabel('Size of treatment effect')
-    ax.set_xticks(list(np.arange(-0.3,0.4,0.1)))
+#    ax.set_xticks(list(np.arange(-0.3,0.4,0.1)))
     #ax.set_xlim([0.1,0.3])
     
     sns.despine(left=True, right=True, top=True)
@@ -186,10 +186,10 @@ def avg_treatment_effect_plt(treatment_list, assignment_list, ate_list):
     ax[1,1].set_xlabel('Size of treatment effect')
   
     
-    ax[0,0].set_xlim([-0.3,0.3])
-    ax[0,1].set_xlim([-0.3,0.3])
-    ax[1,0].set_xlim([-0.3,0.3])
-    ax[1,1].set_xlim([-0.3,0.3])
+    ax[0,0].set_xlim([-1,1])
+    ax[0,1].set_xlim([-1,1])
+    ax[1,0].set_xlim([-1,1])
+    ax[1,1].set_xlim([-1,1])
     
     ax[0,0].axvline(ate_list[0], 0, len(treatment_list), linewidth=4, color='r')
     ax[0,1].axvline(ate_list[1], 0, len(treatment_list), linewidth=4, color='r')
