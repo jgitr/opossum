@@ -13,8 +13,6 @@ Correlation Matrix
 if specified use get function for g_0(x), D
 
 """
-
-
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
 u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0], intensity=10)
@@ -37,7 +35,7 @@ y, X, assignment, treatment = u.output_data()
 single_treatment_effect_plt(treatment,assignment,'mix')
 
 
-#    
+    
 ###### propensity score plot
 #u = UserInterface(10000,10, seed=5)
 #u.generate_treatment(random_assignment=False, treatment_option_weights = [1, 0, 0, 0])
@@ -53,8 +51,8 @@ single_treatment_effect_plt(treatment,assignment,'mix')
 #prop_score_random = u.s.propensity_score#[assignment==1]
 #
 #figure = propensity_score_plt(prop_score_conditioned, prop_score_random)
-#
-#
+
+
 ###### treatment effects plots
 #
 ### Each option alone 
