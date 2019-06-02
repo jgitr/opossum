@@ -58,7 +58,7 @@ class SimData:
               
         return y, self.X, self.D, realized_treatment_effect
 
-    def generate_covariates(self, nonlinear = True):
+    def generate_covariates(self, nonlinear = True, skew = True):
 
         """
         Model-wise: g_0(X)
@@ -95,7 +95,16 @@ class SimData:
 
         # 2)
         mu = np.repeat(0, self.k)
+
+
         X = np.random.multivariate_normal(mu, sigma, self.N)
+        if skew:
+            def skew_data(x):
+                x[x < 1] = x[x < 1] - 1
+                x[x >= 1] = np.log(x[x >= 1])
+                return x
+            X = skew_data(X)
+
         self.X = X
 
         if nonlinear:
@@ -152,14 +161,14 @@ class SimData:
 
 ##??? Removed plotting function from covariates function and created extra plotting function
 ## BUT: Seems useless right now, either create useful plot or remove function
-#    def plot_covariates(self):
-#        '''
-#        
-#        '''
-#        plt.interactive(False)
-#        plt.hist(self.X, bins=10)
-#        plt.ylabel('Test')
-#        plt.show(block=True)
+    def plot_covariates(self):
+        '''
+
+        '''
+        plt.interactive(False)
+        plt.hist(self.X, bins=10)
+        plt.ylabel('Test')
+        plt.show(block=True)
 
     def visualize_correlation(self):
         """
@@ -378,7 +387,7 @@ class UserInterface:
     Class to wrap up all functionalities and give user just the functions that are 
     necessary to create the wanted variables y, X, and treatment
     '''
-    def __init__(self, N, k, seed = None):
+    def __init__(self, N, k, seed = None, skewed_covariates = True):
         '''
         Input:  N, Int with number of observations
                 k, Int with number of covariates 
@@ -388,7 +397,9 @@ class UserInterface:
         it in object s
         '''
         self.s = SimData(N, k, seed)
-        self.s.generate_covariates()
+        self.s.generate_covariates(skew = skewed_covariates)
+        print('plotting skewed covariates!')
+        self.s.plot_covariates()
         
     def generate_treatment(self, random_assignment = True, assignment_prob = 0.5, constant = True, heterogeneous = False,
                                   negative = False, no_treatment = False, treatment_option_weights = None):
