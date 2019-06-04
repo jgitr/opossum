@@ -1,8 +1,23 @@
 Ideen
 
-- Treatment effect Größe anpassbar machen?
+-1 T Treatment effect Größe anpassbar machen?
 	Im Moment: zwischen -0.3 und 0.3 vielleicht zu klein für contiunous case?
 	(Bei Intervall von etwa [-3,4]
 
-- treatment assignment, option not-random: Im Moment immer etwa 50% assginment
+-2 T architektur mit 3 leveln
+
+- 3.2 J categorical covariates und outcome
+- 3.1 J binary covariates mit logit/probit function?
+
+-4 T Index vector mit Art der effekte
+
+-4 T diskrete hetergoenous effekt
+
+-5.2 J treatment assignment, option not-random: Im Moment immer etwa 50% assginment
 	Option zur Anpassung hinzufügen?
+
+-5.1 J Schiefe der Covariates Verteilung
+
+-5.3  Interaktion der treatment effects
+
+-6 Blog post: Motivation, Conclusion
