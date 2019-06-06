@@ -1,23 +1,21 @@
-from SimulateData import UserInterface
+from opossum import UserInterface
 
 
-"""
-User Input: 
-N, k, options / effect type, assignment type (random...)
-
-Output:
-Y, X, Treatment Effect = theta_0 * D
-Correlation Matrix
-if specified use get function for g_0(x), D
-
-"""
 
 if __name__ == "__main__":
     
     ##### propensity score plot
-    u = UserInterface(100000,10, seed=5, skewed_covariates = True)
-    u.generate_treatment(random_assignment=False,constant_pos=False, heterogeneous_pos=False, heterogeneous_neg=True, treatment_option_weights = None)
-    y, X, assignment, treatment = u.output_data()
+    u = UserInterface(10000, 10, seed=5, )
+    u.generate_treatment(random_assignment = True, 
+                         assignment_prob = 0.5, 
+                         constant_pos = True, 
+                         constant_neg = False,
+                         heterogeneous_pos = False, 
+                         heterogeneous_neg = False, 
+                         no_treatment = False, 
+                         treatment_option_weights = None, # [constant_pos, constant_neg, heterogeneous_pos, heterogeneous_neg, no_treatment] percentage of each
+                         intensity = 5)
+    y, X, assignment0, treatment = u.output_data()
 
 
 
