@@ -74,7 +74,7 @@ Weight vector <a href="https://www.codecogs.com/eqnedit.php?latex=$\;&space;b_{k
 
 
 ```python
-from SimulateData import UserInterface
+from opossum import UserInterface
 
 u = UserInterface(N = 10000,k = 10, seed = 12)
 
