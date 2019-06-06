@@ -112,18 +112,18 @@ u.plot_covariates_correlation()
 
 ## Distribution of propensity scores according to treatment assignment
 
-<img src=plot_pictures/propensity_scores.png>
+<img src=src/plot_pictures/propensity_scores.png>
 
 ## Treatment effect options 
 
-<img src=plot_pictures/treatment_effect_options.png>
+<img src=src/plot_pictures/treatment_effect_options.png>
 
 ## Customized treatment distribution
 
-<img src=plot_pictures/realistic_treatment_effect.png>
+<img src=src/plot_pictures/realistic_treatment_effect.png>
 
 ## Outputs depending on treatment assignment 
 
-<img src=plot_pictures/continuous_output.png>
+<img src=src/plot_pictures/continuous_output.png>
 
-<img src=plot_pictures/binary_output.png>
+<img src=src/plot_pictures/binary_output.png>
