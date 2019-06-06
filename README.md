@@ -74,7 +74,7 @@ Weight vector <a href="https://www.codecogs.com/eqnedit.php?latex=$\;&space;b_{k
 
 
 ```python
-from opossum import UserInterface
+from SimulateData import UserInterface
 
 u = UserInterface(N = 10000,k = 10, seed = 12)
 
@@ -87,7 +87,7 @@ u.generate_treatment(random_assignment = True,
                      no_treatment = False,
                      treatment_option_weights = [0, 0, 0.7, 0.1, 0.2], # treatment_option_weights default: None 
                      # [constant_pos,constant_neg, heterogeneous_pos, heterogeneous_neg, no effect]
-                     intensity = 5) 
+                     intensity = 5)
 
 y, X, assignment_vector, treatment_effect = u.output_data(binary=False)
      
