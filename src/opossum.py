@@ -113,7 +113,7 @@ class SimData:
 
         if nonlinear:
             # transforming by cos(X*weights)²
-            self.g_0_X = np.cos(np.dot(X,self.weights_covariates_to_outputs))**2 + np.dot(X,self.weights_covariates_to_outputs)
+            self.g_0_X = np.cos(np.dot(X,self.weights_covariates_to_outputs))**3 + 0.2*np.dot(X,self.weights_covariates_to_outputs)
         else:
             # If not nonlinear, then g_0(X) is just the identity 
             self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
