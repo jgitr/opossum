@@ -304,11 +304,16 @@ class SimData:
         if no_treatment:
             theta_combined[n_idx == 5] = 0 # not really necessary since vector was full of 0 
         
+        # Assign identifier 0 for each observation that did not get assigned to treatment        
+        n_idx[self.D == 0] = 0
         
+        # create vector that shows 0 for not assigned observations and treatment-type (1-5) for assigned ones 
         self.treatment_effect_type = n_idx
+        # vector that includes sizes of treatment effects for each observation
         self.treatment_effect = theta_combined
 
         return None
+    
     def generate_realized_treatment_effect(self):
         """
         Model-wise: Theta_0 * D
@@ -465,7 +470,7 @@ class UserInterface:
     
     def get_treatment_effect_type(self):
         return self.backend.treatment_effect_type
-    
+        
     def set_weights_treatment_assignment(self, new_weight_vector):
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
