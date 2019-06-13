@@ -27,7 +27,7 @@ class SimData:
         # using random weights from U[0,1]
         self.weights_treatment_assignment = np.random.uniform(0,1,self.k)
         # doing the same for relation of X and y
-        self.weights_covariates_to_outputs = np.random.uniform(0,1,self.k)
+        self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) #np.random.uniform(0,1,self.k)
         
     def generate_outcome_variable(self, binary):
         """
@@ -88,10 +88,12 @@ class SimData:
         # Make sure negative covariance exists, too.
         overlay_matrix = np.random.randint(2, size=(self.k, self.k))  # set -1 where 0
         overlay_matrix[overlay_matrix == 0] = -1
-        A = A * overlay_matrix
-
+        A = (10/(self.k)) * A * overlay_matrix
+        
+        self.A = A
+        
         sigma = np.dot(A, A.transpose())  # a matrix multiplied with its transposed is aaaalways positive definite
-
+        
         # Positive Definite Check
         if not is_pos_def(sigma):
             raise ValueError('sigma is not positive definite!')
@@ -102,6 +104,8 @@ class SimData:
 
 
         X = np.random.multivariate_normal(mu, sigma, self.N)
+        
+        
         if skew:
             def skew_data(x):
                 x[x < 1] = x[x < 1] - 1
