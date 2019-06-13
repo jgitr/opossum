@@ -74,7 +74,7 @@ Weight vector <a href="https://www.codecogs.com/eqnedit.php?latex=$\;&space;b_{k
 
 
 ```python
-from SimulateData import UserInterface
+from opossum import UserInterface
 
 u = UserInterface(N = 10000,k = 10, seed = 12)
 
@@ -112,18 +112,19 @@ u.plot_covariates_correlation()
 
 ## Distribution of propensity scores according to treatment assignment
 
-<img src=src/plot_pictures/propensity_scores.png>
+<img src=plots/propensity_scores.png>
 
 ## Treatment effect options 
 
-<img src=src/plot_pictures/treatment_effect_options.png>
+<img src=plots/treatment_effect_options.png>
 
 ## Customized treatment distribution
 
-<img src=src/plot_pictures/realistic_treatment_effect.png>
+<img src=plots/realistic_treatment_effect.png>
 
 ## Outputs depending on treatment assignment 
 
-<img src=src/plot_pictures/continuous_output.png>
+<img src=plots/continuous_output.png>
 
-<img src=src/plot_pictures/binary_output.png>
+<img src=plots/binary_output.png>
+
