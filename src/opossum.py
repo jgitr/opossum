@@ -26,8 +26,11 @@ class SimData:
         # initilizing weight vector for treatment assignment 
         # using random weights from U[0,1]
         self.weights_treatment_assignment = np.random.uniform(0,1,self.k)
-        # doing the same for relation of X and y
+        # doing the same for relation of X and y with beta distribution (alpha=1, beta=5)
         self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) #np.random.uniform(0,1,self.k)
+        
+        # set size of subset Z of X for heterogeneous treatment creation
+        self.z_set_size = np.int(self.k/2)
         
     def generate_outcome_variable(self, binary):
         """
@@ -184,14 +187,19 @@ class SimData:
         return None
 
 
-    def generate_treatment_effect(self, treatment_option_weights, constant_pos, constant_neg,
-                                  heterogeneity_pos, heterogeneity_neg, no_treatment, intensity):
+    def generate_treatment_effect(self, treatment_option_weights, constant_pos, 
+                                  constant_neg, heterogeneity_pos, 
+                                  heterogeneity_neg, no_treatment, 
+                                  discrete_heterogeneity, intensity):
 
         """
         """
 
         # ratio list: [constant, heterogeneity, negative, no_treatment] (treatment_option_weights)
         # e.g. [0, 0.5, 0.1, 0.4], needs to sum up to 1 
+        
+        # length of treatment_option_weights vector/number of treatment effect options
+        tow_length = 6
         
         if intensity > 10 or intensity < 1:
             raise ValueError("intensity needs to be an int or float value of [1,10]")
@@ -201,7 +209,7 @@ class SimData:
             treatment_option_weights = np.array(treatment_option_weights)
             if np.around(np.sum(treatment_option_weights),3) !=1:
                 raise ValueError('Values in treatment_option_weights-vector must sum up to 1')
-            if len(treatment_option_weights) !=5:
+            if len(treatment_option_weights) !=tow_length:
                 raise ValueError('Treatment_option_weights-vector must be of length 5')
             
             
@@ -213,7 +221,7 @@ class SimData:
                 index_max = np.argmax(treatment_option_weights)
                 absolute_ratio[index_max] = absolute_ratio[index_max] + (self.N-sum(absolute_ratio))
             
-            # fill up index-array with options 1-4 according to the weights
+            # fill up index-array with options 1-6 according to the weights
             weight_ratio_index = np.zeros((self.N,))
             counter = 0
             for i in range(len(absolute_ratio)):
@@ -227,12 +235,14 @@ class SimData:
             # overwriting booleans according to given treatment_option_weights             
             options_boolean = treatment_option_weights > 0
             
-            constant_pos, constant_neg, heterogeneity_pos, heterogeneity_neg, no_treatment = tuple(options_boolean)
+            constant_pos, constant_neg, heterogeneity_pos, heterogeneity_neg, no_treatment, discrete_heterogeneity  = tuple(options_boolean)
             
         # Process options
         options = []
         
-        options_boolean = np.array([constant_pos, constant_neg, heterogeneity_pos, heterogeneity_neg, no_treatment])
+        options_boolean = np.array([constant_pos, constant_neg, heterogeneity_pos, 
+                                    heterogeneity_neg, no_treatment, 
+                                    discrete_heterogeneity])
 
         # selecting wanted treatment options into list        
         for i in range(len(options_boolean)):
@@ -245,7 +255,7 @@ class SimData:
             # assigning which individual gets which kind of treatment effect 
             treatment_option_weights = np.zeros(len(options_boolean))
             treatment_option_weights[options_boolean] = 1/np.sum(options_boolean)
-            # from options 1-4
+            # from options 1-6
             n_idx = np.random.choice(options, self.N, True)
             
             
@@ -276,18 +286,29 @@ class SimData:
             # (1) Apply trigonometric function
             # (2) Standardize the treatment effet within the interval [0,intensity*0.2]
             
+            # creating index vector that assigns which covariates are part of Z
+            h_idx = np.concatenate((np.zeros(self.k - self.z_set_size),np.zeros(self.z_set_size)))
+            np.random.shuffle(h_idx)
             
-            # assigning randomly which covariates affect treatment effect
-            r_idx = np.random.choice(options, size = self.k, replace = True)
-            
-            #(1) Trigonometric
-            X_option2 = self.X[:,(r_idx == 3) | (r_idx == 4)].copy()
-            
+            X_h = self.X[:,h_idx == 1].copy()
+
             w = np.random.normal(0,0.25,self.N)
-            # Need to adjust weights dimension such that it complies with the alternated k 
-            weight_vector_adj = self.weights_treatment_assignment[(r_idx == 3) | (r_idx == 4)]
+
+            weight_vector_adj = self.weights_treatment_assignment[h_idx == 1]
             
-            gamma = np.sin(np.dot(X_option2, weight_vector_adj)) + w  # one gamma for each observation in n
+            gamma = np.sin(np.dot(X_h, weight_vector_adj)) + w  # one gamma for each observation in n
+            
+            # old assigning of Z (depended on number of choosen treatment effects)
+#            r_idx = np.random.choice(options, size = self.k, replace = True)
+#            
+#            #(1) Trigonometric
+#            X_option2 = self.X[:,(r_idx == 3) | (r_idx == 4)].copy()
+#            
+#            w = np.random.normal(0,0.25,self.N)
+#            # Need to adjust weights dimension such that it complies with the alternated k 
+#            weight_vector_adj = self.weights_treatment_assignment[(r_idx == 3) | (r_idx == 4)]
+#            
+#            gamma = np.sin(np.dot(X_option2, weight_vector_adj)) + w  # one gamma for each observation in n
 
             # (2) Standardize on [0,g(intensity)], g(): some function e.g. g(x)=0.2x
             theta_option2 = standardize(gamma, intensity*0.2, 0)
@@ -304,11 +325,51 @@ class SimData:
         if no_treatment:
             theta_combined[n_idx == 5] = 0 # not really necessary since vector was full of 0 
         
+        if discrete_heterogeneity:
+            ### assigning randomly which covariates affect treatment effect
+            # creating index vector
+            dh_idx = np.concatenate((np.zeros(self.k - self.z_set_size),np.ones(self.z_set_size)))
+            np.random.shuffle(dh_idx)
+            
+            # choosing covariates in Z
+            X_dh = self.X[:,dh_idx == 1].copy()
+            # adjusting weight vector to length of Z 
+            weight_vector_adj = self.weights_treatment_assignment[dh_idx == 1]
+            
+            a = np.dot(X_dh,weight_vector_adj)
+            
+            # normalizing 'a' vector
+            a_mean = np.mean(a)
+            a_sigma = np.std(a)
+            z = (a - a_mean) / a_sigma          
+            
+            # create probabilities
+            dh_effect_prob = stats.norm.cdf(z)
+            
+            # assigning low and high treatment outcome 
+            theta_dh = np.random.binomial(1,dh_effect_prob).astype(float)
+            
+            low_effect = 0.05 * intensity
+            
+            high_effect = 0.1 * intensity
+                
+            theta_dh[theta_dh == 0] = low_effect
+            
+            theta_dh[theta_dh == 1] = high_effect
+            
+            theta_combined[n_idx == 6] = theta_dh[n_idx == 6]
+            
+            
+        # Assign identifier 0 for each observation that did not get assigned to treatment        
+        n_idx[self.D == 0] = 0
         
+        # create vector that shows 0 for not assigned observations and treatment-type (1-5) for assigned ones 
         self.treatment_effect_type = n_idx
+        # vector that includes sizes of treatment effects for each observation
         self.treatment_effect = theta_combined
 
         return None
+    
     def generate_realized_treatment_effect(self):
         """
         Model-wise: Theta_0 * D
@@ -405,8 +466,15 @@ class UserInterface:
         self.backend.generate_covariates(skew = skewed_covariates)
         #self.backend.plot_covariates()
         
-    def generate_treatment(self, random_assignment = True, assignment_prob = 0.5, constant_pos = True, constant_neg = False,
-                           heterogeneous_pos = False, heterogeneous_neg = False, no_treatment = False, treatment_option_weights = None,
+    def generate_treatment(self, random_assignment = True, 
+                           assignment_prob = 0.5, 
+                           constant_pos = True, 
+                           constant_neg = False,
+                           heterogeneous_pos = False, 
+                           heterogeneous_neg = False, 
+                           no_treatment = False, 
+                           discrete_heterogeneous = False,
+                           treatment_option_weights = None,
                            intensity = 5):
         '''
         Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
@@ -431,8 +499,10 @@ class UserInterface:
         return: None
         '''
         self.backend.generate_treatment_assignment(random_assignment, assignment_prob)
-        self.backend.generate_treatment_effect(treatment_option_weights, constant_pos, constant_neg,
-                                  heterogeneous_pos, heterogeneous_neg, no_treatment, intensity)
+        self.backend.generate_treatment_effect(treatment_option_weights, constant_pos,
+                                               constant_neg, heterogeneous_pos, 
+                                               heterogeneous_neg, no_treatment, 
+                                               discrete_heterogeneous, intensity)
 
         return None
 
@@ -465,7 +535,7 @@ class UserInterface:
     
     def get_treatment_effect_type(self):
         return self.backend.treatment_effect_type
-    
+        
     def set_weights_treatment_assignment(self, new_weight_vector):
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
@@ -478,25 +548,14 @@ class UserInterface:
         
         self.backend.weights_covariates_to_outputs= np.array(new_weight_vector)
         
-
+    def set_subset_z_size(self, new_size):
+        if new_size < 1 or new_size > self.backend.get_k():
+            raise ValueError('Size of subset Z needs to be within [1,k]')
+            
+        self.backend.z_set_size = new_size
+        
     def __str__(self):
         return "N = " + str(self.backend.get_N()) + ", k = " + str(self.backend.get_k())
-
-
-
-# Of the following goals, discrete heterogeneity is still missing
-# – No treatment effect (for all or for some people).
-# – Constant (for all or for some people).
-# – heterogeneity (discrete and continuous).
-# – Even negative values seem realistic (for some people).
-        
-##### Also: It is not possible yet to get a heterogenous treatment effect for all
-    # assigned individuals that just dependes on some covariates
-    # Either Some heterogenous effects and some others (non, constant, negative) and just 
-    # dependence on some covariates or
-    # All heterogenous effects and depending on all covariates
-
-
 
 
 

@@ -17,7 +17,7 @@ if specified use get function for g_0(x), D
 """
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0], intensity=10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity=10)
 y, X, assignment, treatment = u.output_data()
 
 
@@ -109,7 +109,7 @@ figure = propensity_score_plt(prop_score_conditioned, prop_score_random)
 
 ### continous 
 u = UserInterface(10000,10, seed=7)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0], intensity = 10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity = 10)
 y, X, assignment, treatment = u.output_data(False)
 
 
