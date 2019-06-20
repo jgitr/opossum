@@ -14,7 +14,10 @@ if __name__ == "__main__":
                          heterogeneous_neg = False, 
                          no_treatment = False, 
                          discrete_heterogeneous = True,
-                         treatment_option_weights = None, # [constant_pos, constant_neg, heterogeneous_pos, heterogeneous_neg, no_treatment] percentage of each
+                         treatment_option_weights = None, 
+                         # replace None with vector [constant_pos, constant_neg, 
+                         # heterogeneous_pos, heterogeneous_neg, no_treatment, 
+                         # discrete_heterogeneous] percentage of each
                          intensity = 5)
     y, X, assignment, treatment = u.output_data()
 

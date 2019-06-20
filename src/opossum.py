@@ -26,7 +26,7 @@ class SimData:
         # initilizing weight vector for treatment assignment 
         # using random weights from U[0,1]
         self.weights_treatment_assignment = np.random.uniform(0,1,self.k)
-        # doing the same for relation of X and y
+        # doing the same for relation of X and y with beta distribution (alpha=1, beta=5)
         self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) #np.random.uniform(0,1,self.k)
         
         # set size of subset Z of X for heterogeneous treatment creation
@@ -326,14 +326,14 @@ class SimData:
             theta_combined[n_idx == 5] = 0 # not really necessary since vector was full of 0 
         
         if discrete_heterogeneity:
-            # assigning randomly which covariates affect treatment effect
-
+            ### assigning randomly which covariates affect treatment effect
+            # creating index vector
             dh_idx = np.concatenate((np.zeros(self.k - self.z_set_size),np.ones(self.z_set_size)))
             np.random.shuffle(dh_idx)
             
-            #(1) Trigonometric
+            # choosing covariates in Z
             X_dh = self.X[:,dh_idx == 1].copy()
-            
+            # adjusting weight vector to length of Z 
             weight_vector_adj = self.weights_treatment_assignment[dh_idx == 1]
             
             a = np.dot(X_dh,weight_vector_adj)
