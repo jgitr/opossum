@@ -65,7 +65,7 @@ class SimData:
               
         return y, self.X, self.D, realized_treatment_effect
 
-    def generate_covariates(self, nonlinear = True, skew = True):
+    def generate_covariates(self, nonlinear = True, skew = True, categorical_covariates = 3):
 
         """
         Model-wise: g_0(X)
@@ -82,6 +82,7 @@ class SimData:
          options:
             – continuous with some known distribution (e.g.  Normal()).
             – discrete (dummy and multilevel).
+
         """
 
         # 1)
@@ -116,7 +117,6 @@ class SimData:
                 return x
             X = skew_data(X)
 
-        self.X = X
 
         if nonlinear:
             # transforming by cos(X*weights)²
@@ -124,6 +124,25 @@ class SimData:
         else:
             # If not nonlinear, then g_0(X) is just the identity 
             self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
+
+
+        if categorical_covariates >= 1:
+            """
+            Categorical realizations of X.
+            The idea is to use some standardize some x element of X in [0,1] and then use that as p parameter for a bernoulli random variable.
+            Repeatedly sum the realization and treat as category.
+            Seed allows for different bernoulli realizations :)
+            So far transforms all components of X.
+            """
+
+            for i in range(len(X)):
+                category = 0                                                                     # reset for every iteration
+                z = standardize(X[i], 1, 0)                                                      # vector
+                for j in range(categorical_covariates):
+                    category += np.random.binomial(1, z)                                         # bernoulli rv is binomial rv with n = 1
+                X[i] = category
+
+        self.X = X
 
         return None
 
@@ -452,7 +471,7 @@ class UserInterface:
     Class to wrap up all functionalities and give user just the functions that are 
     necessary to create the wanted variables y, X, and treatment
     '''
-    def __init__(self, N, k, seed = None, skewed_covariates = False):
+    def __init__(self, N, k, seed = None, skewed_covariates = False, categorical_covariates = 3):
         '''
         Input:  N, Int with number of observations
                 k, Int with number of covariates 
@@ -460,10 +479,13 @@ class UserInterface:
         Initilizes UserInterface class with number of observations N and number of covariates k.
         Generates Nxk matrix "X" with values for each covariate for all observations and saves 
         it in object s
+        Additional options for covariates X:
+            - Skewness
+            - Categories
         '''
 
         self.backend = SimData(N, k, seed)
-        self.backend.generate_covariates(skew = skewed_covariates)
+        self.backend.generate_covariates(skew = skewed_covariates, categorical_covariates = categorical_covariates)
         #self.backend.plot_covariates()
         
     def generate_treatment(self, random_assignment = True, 

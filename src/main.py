@@ -21,5 +21,8 @@ if __name__ == "__main__":
                          intensity = 5)
     y, X, assignment, treatment = u.output_data()
 
-
+    print(y)
+    print(X)
+    print(assignment)
+    print(treatment)
 
