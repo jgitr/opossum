@@ -2,7 +2,7 @@ from scipy import random, stats
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from helpers import standardize, is_pos_def
+from helpers import standardize, is_pos_def, adjusting_assignment_level, revert_string_prob
 
 class SimData:
     """
@@ -65,24 +65,23 @@ class SimData:
               
         return y, self.X, self.D, realized_treatment_effect
 
-    def generate_covariates(self, nonlinear = True, skew = True, categorical_covariates = 3):
+    def generate_covariates(self, categorical_covariates, nonlinear = True, skew = True):
 
         """
-        Model-wise: g_0(X)
-
-        Algorithm for Covariates
-
-        1) Generate a random positive definite covariance matrix Sigma
-        based on a uniform distribution over the space k*k of the correlation matrix
-
-        2) Generate random normal distributed variables X_{N*k} with mean = 0 and variance = sigma
-
-        Create low- and high-dimensional dataset.
-         Correlation between the covariates isrealistic.
-         options:
-            – continuous with some known distribution (e.g.  Normal()).
-            – discrete (dummy and multilevel).
-
+        Generates the covariates matrix and its non-linear transformation
+        
+        Parameters:
+            categorical_covariates (int or list): Either an int, indicating the
+                number of categories that all covariates are made of; a list 
+                with 2 ints, the first int indicating the number of covariates 
+                and the second the number of categories; or a list with one int
+                and a list of ints, where the list of ints includes the 
+                different number of categories wanted.
+        
+        ...
+        
+        Returns:
+            None
         """
 
         # 1)
@@ -124,23 +123,95 @@ class SimData:
         else:
             # If not nonlinear, then g_0(X) is just the identity 
             self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
+            
+        ### Categorical variables ###
+        
+        if categorical_covariates == None:
+            self.X = X
+            return None
+        
+        # Single integer: all covariates become categorical with int categories
+        if type(categorical_covariates) == int:
+            # Standardizing column wise to [0,1]
+            X = (X - np.min(X, axis=0))/(np.max(X, axis=0)-np.min(X, axis=0))
+            
+            X_categorical = np.zeros(X.shape)
+            # Creating categorical variables with chosen number of categories
+            for c in range(categorical_covariates-1):
+                X_categorical += np.random.binomial(1, X)
+            
+            X = X_categorical
+            
+        elif type(categorical_covariates) == list and len(categorical_covariates) == 2:
+            num_cat_covariates = categorical_covariates[0]
+            if num_cat_covariates > self.k:
+                raise Warning('Number of catigorical variables ({}) is greater than number of covariates ({}). \nAll {} covariates are made categorical.'.format(num_cat_covariates, self.k, self.k))
+            
+            X_cat_part = X[:,:num_cat_covariates]
+            # Standardizing column wise to [0,1]
+            X_cat_part = (X_cat_part - np.min(X_cat_part, axis=0))/(np.max(X_cat_part, axis=0)-np.min(X_cat_part, axis=0))
+            X_categorical = np.zeros(X_cat_part.shape)
+            
+            # List with 2 ints: Chosen number of covarites become categorical
+            # with chosen number of categories
+            if type(categorical_covariates[1]) ==  int:
+                num_categories = categorical_covariates[1]
+                # Creating categorical variables with chosen number of categories
+                for c in range(num_categories-1):
+                    X_categorical += np.random.binomial(1, X_cat_part)
+                
+            # List with int and list of ints: Chosen number of covariates become 
+            # categorical according to chosen list of number of categories
+            elif type(categorical_covariates[1]) == list:
+                
+                num_categories_list = categorical_covariates[1]
+                
+                # Creating vector with wanted category numbers 
+                category_type_vector = np.array((num_cat_covariates // len(num_categories_list) + 1) * num_categories_list)
+                # Making sure it has the wanted length, which is the number of
+                # wanted categorical covariates
+                category_type_vector = category_type_vector[:num_cat_covariates]
+                
+                start = 0 
+                end = 0
+                # Selecting one by one wanted category numbers
+                for num_categories in num_categories_list:
+                    
+                    end += np.sum(category_type_vector == num_categories)
+                    # Adding up bernouli outcomes to get categorical variables
+                    for c in range(num_categories-1):
+                        X_categorical[:, start:end] += np.random.binomial(1, X_cat_part[:, start:end])
+                    
+                    start = end
+                    
+            else:
+                raise ValueError("categorical_covariates needs to be either an int, a list of 2 ints, or a list of one int and a list of ints. \nMake sure that the second item of the list is an int or a list of ints")
+            
+            X[:,:num_cat_covariates] = X_categorical                
+            
 
-
-        if categorical_covariates >= 1:
-            """
-            Categorical realizations of X.
-            The idea is to use some standardize some x element of X in [0,1] and then use that as p parameter for a bernoulli random variable.
-            Repeatedly sum the realization and treat as category.
-            Seed allows for different bernoulli realizations :)
-            So far transforms all components of X.
-            """
-
-            for i in range(len(X)):
-                category = 0                                                                     # reset for every iteration
-                z = standardize(X[i], 1, 0)                                                      # vector
-                for j in range(categorical_covariates):
-                    category += np.random.binomial(1, z)                                         # bernoulli rv is binomial rv with n = 1
-                X[i] = category
+        else:
+            raise ValueError("categorical_covariates needs to be either an int, a list of 2 ints, or a list of one int and a list of ints. \nMake sure that it is a list of length 2 or a single int" )
+                
+        
+#        if categorical_covariates >= 1:
+#            """
+#            Categorical realizations of X.
+#            The idea is to use some standardize some x element of X in [0,1] and then use that as p parameter for a bernoulli random variable.
+#            Repeatedly sum the realization and treat as category.
+#            Seed allows for different bernoulli realizations :)
+#            So far transforms all components of X.
+#            """
+#
+#            for i in range(len(X)):
+#                category = 0                                                                     # reset for every iteration
+#                z = standardize(X[i], 1, 0)                                                      # vector
+#            
+#            for j in range()
+#            
+#            for j in range(categorical_covariates):
+#                    category += np.random.binomial(1, z)                                         # bernoulli rv is binomial rv with n = 1
+#                X[i] = category
 
         self.X = X
 
@@ -150,26 +221,49 @@ class SimData:
     def generate_treatment_assignment(self, random, assignment_prob):
         
         """
-        Treatment assignment
-        binary and multilevel (discrete).The generation should be
-        –random (randomized control trial) with possible imbalanced assignment (e.g.  75% treatedand 25% control.
-
-        :return:
+        Generates treatment assignment vector
+        
+        Parameters:
+            random (boolean): If True, treatment is assigned randomly 
+                according to assignment_prob parameter. If False, treatment 
+                assignment is determined depending on covariates. 
+                (default is True)
+            assignment_prob (float or string): 
         """       
         # random treatment assignment
         if random:
             m_0 = assignment_prob  # probability
             
+            # reverting strings like 'low' to float prob like 0.35, if necessary
+            if isinstance(m_0, str):
+                m_0 = revert_string_prob(m_0)                    
+            
             # propensity scores for each observation 
             self.propensity_scores = np.repeat(m_0,self.N)
+                                
+                
         else:
             a = np.dot(self.X, self.weights_treatment_assignment)    # X*weights -> a (Nx1 vector)
-
+            
+            try:
+                # get value that adjusts z and thus propensity scores 
+                z_adjustment = adjusting_assignment_level(assignment_prob)
+                
+            except KeyError:
+                z_adjustment = 0
+                
+                # making sure default of 0.5 does not give warning
+                if assignment_prob != 0.5:                    
+                    raise Warning('When assignment is not random, expected assignment_prob' 
+                                  + ' can only be \'low\': 0.35, \'medium\': 0.5,' +
+                                  'or \'high\': 0.65. Now medium is chosen ')
+            
             # Using empirical mean, sd
-            a_mean = np.mean(a)
+            a_mean = np.mean(a) 
             a_sigma = np.std(a)
-            z = (a - a_mean) / a_sigma          # normalizing 'a' vector
-
+            # normalizing 'a' vector and adjust if chosen
+            z = (a - a_mean) / a_sigma + z_adjustment    
+            
             # using normalized vector z to get probabilities from normal pdf
             # to later assign treatment with binomial in D
             m_0 = stats.norm.cdf(z)
@@ -229,7 +323,7 @@ class SimData:
             if np.around(np.sum(treatment_option_weights),3) !=1:
                 raise ValueError('Values in treatment_option_weights-vector must sum up to 1')
             if len(treatment_option_weights) !=tow_length:
-                raise ValueError('Treatment_option_weights-vector must be of length 5')
+                raise ValueError('Treatment_option_weights-vector must be of length {}'.format(tow_length))
             
             
             # take times N to get absolute number of each option
@@ -471,7 +565,7 @@ class UserInterface:
     Class to wrap up all functionalities and give user just the functions that are 
     necessary to create the wanted variables y, X, and treatment
     '''
-    def __init__(self, N, k, seed = None, skewed_covariates = False, categorical_covariates = 3):
+    def __init__(self, N, k, seed = None, skewed_covariates = False, categorical_covariates = None):
         '''
         Input:  N, Int with number of observations
                 k, Int with number of covariates 

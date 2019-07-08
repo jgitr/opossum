@@ -15,6 +15,7 @@ Correlation Matrix
 if specified use get function for g_0(x), D
 
 """
+
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
 u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity=10)
@@ -38,8 +39,8 @@ single_treatment_effect_plt(treatment,assignment,'mix')
 
 
 ##### scatter plot y~X without treatment
-u = UserInterface(10000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 1])
+u = UserInterface(10000,10, seed=5, categorical_covariates = 5)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 1, 0])
 y, X, assignment, treatment = u.output_data()
 
 scatter_plot_y_x(np.dot(X, u.get_weigths_covariates_to_outputs()),y)
@@ -52,19 +53,19 @@ u.plot_covariates_correlation()
 
 ##### propensity score plot
 u = UserInterface(10000,10, seed=5)
-u.generate_treatment(random_assignment=False, treatment_option_weights = [1, 0, 0, 0, 0])
+u.generate_treatment(random_assignment=False, assignment_prob = 'high', treatment_option_weights = [1, 0, 0, 0, 0, 0])
 y, X, assignment, treatment = u.output_data()
 
-prop_score_conditioned = u.s.propensity_score#[assignment==1]
-
+print('Average of propensity scores:' + str(np.mean(u.get_propensity_scores())))
 
 u = UserInterface(10000,10, seed=5)
-u.generate_treatment(random_assignment=True, assignment_prob = 0.5,  treatment_option_weights = [1, 0, 0, 0, 0])
+u.generate_treatment(random_assignment=True, assignment_prob = 'high',  treatment_option_weights = [1, 0, 0, 0, 0, 0])
 y, X, assignment, treatment = u.output_data()
 
-prop_score_random = u.s.propensity_score#[assignment==1]
-
+prop_score_random = u.get_propensity_scores()
 figure = propensity_score_plt(prop_score_conditioned, prop_score_random)
+
+
 
 
 ###### treatment effects plots
@@ -108,8 +109,8 @@ figure = propensity_score_plt(prop_score_conditioned, prop_score_random)
 #### Output differences treated/not_treated plots
 
 ### continous 
-u = UserInterface(10000,10, seed=7)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity = 10)
+u = UserInterface(10000,10, seed=7, categorical_covariates = [1, [2,5]])
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity = 10)
 y, X, assignment, treatment = u.output_data(False)
 
 
