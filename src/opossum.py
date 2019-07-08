@@ -228,7 +228,19 @@ class SimData:
                 according to assignment_prob parameter. If False, treatment 
                 assignment is determined depending on covariates. 
                 (default is True)
-            assignment_prob (float or string): 
+            assignment_prob (float or string): The probability with which 
+                treatment is assigned. In the case of random assignment, it can
+                be a float with 0 < prob < 1. If assignment is not random it
+                should be one of the following strings: 'low', 'medium', 'high'.
+                The strings stand for the values 0.35, 0.5, 0.65 respectively
+                and can also be used in the non-random case.
+                (default is 0.5)
+            
+        ...
+            
+        Returns:
+            None
+                
         """       
         # random treatment assignment
         if random:
@@ -276,17 +288,6 @@ class SimData:
 
         
         return None
-
-##??? Removed plotting function from covariates function and created extra plotting function
-## BUT: Seems useless right now, either create useful plot or remove function
-    def plot_covariates(self):
-        '''
-
-        '''
-#        plt.interactive(False)
-        plt.hist(self.X, bins=10)
-        plt.ylabel('Test')
-        plt.show()#block=True)
 
     def visualize_correlation(self):
         """
@@ -411,18 +412,6 @@ class SimData:
             
             gamma = np.sin(np.dot(X_h, weight_vector_adj)) + w  # one gamma for each observation in n
             
-            # old assigning of Z (depended on number of choosen treatment effects)
-#            r_idx = np.random.choice(options, size = self.k, replace = True)
-#            
-#            #(1) Trigonometric
-#            X_option2 = self.X[:,(r_idx == 3) | (r_idx == 4)].copy()
-#            
-#            w = np.random.normal(0,0.25,self.N)
-#            # Need to adjust weights dimension such that it complies with the alternated k 
-#            weight_vector_adj = self.weights_treatment_assignment[(r_idx == 3) | (r_idx == 4)]
-#            
-#            gamma = np.sin(np.dot(X_option2, weight_vector_adj)) + w  # one gamma for each observation in n
-
             # (2) Standardize on [0,g(intensity)], g(): some function e.g. g(x)=0.2x
             theta_option2 = standardize(gamma, intensity*0.2, 0)
             # calculating percentage quantile of negative treatment effect weights 

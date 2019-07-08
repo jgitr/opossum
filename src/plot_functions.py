@@ -50,7 +50,7 @@ def propensity_score_plt(conditioned, random):
     plt.setp(axes, yticks=[])
     plt.tight_layout()
     
-    plt.savefig('propensity_score_plot.png')
+    #plt.savefig('propensity_score_plot.png')
 
 
 
