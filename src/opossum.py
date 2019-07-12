@@ -6,18 +6,27 @@ from helpers import standardize, is_pos_def, adjusting_assignment_level, revert_
 
 class SimData:
     """
-    Model: Refer to Paper in Readme
-
-    # Y = Outcome (dependend variable). Either continuous or binary.
-    # N = Number of observations (real number)
-    # k = Number of covariates (real number). At least 10
-    # random_d = treatment assignment: (Either T for random assignment or F for confounding on X)
-    # theta = treatment effect: (Either real number for only one theta, or "binary" {0.1,0.3}, "con" for continuous values (0.1,0.3) or "big" for {1,0.4})
-    # var = Size of the variance (Noise-level)
-
+    Main class that package is built on
     """
 
     def __init__(self, N, k, seed):
+        '''
+        Parameters:
+            N (int): Number of observations
+            k (int): Number of covariates
+        Attributes:
+            weights_treatment_assignment (numpy array): Weight vector, drawn 
+                from a uniform distribution U(0,1), of length k. It is used to 
+                weight covariates when assigning treatment non-randomly and 
+                when creating heterogeneous treatment effects.
+            weights_covariates_to_outputs (numpy array) Weight vector, drawn 
+                from a beta distribution Beta(1,5), of length k. It is used to 
+                weight covariate importance when creating output y from X.
+            z_set_size_assignment (int): Number of covariates in subset Z of X
+                that are used to assign treatment non-randomly.
+            z_set_size_treatment (int): Number of covariates in subset Z of X 
+            that are used to create heterogeneous treatment effects. 
+        '''
         if seed is not None:
             random.seed(seed) # For debugging
         self.N = N # Natural, number of observations
@@ -30,17 +39,24 @@ class SimData:
         self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) #np.random.uniform(0,1,self.k)
         
         # set size of subset Z of X for heterogeneous treatment creation
-        self.z_set_size = np.int(self.k/2)
+        self.z_set_size_treatment = np.int(self.k/2)
+        # set size of subset Z of X for non-random treatment assignment        
+        self.z_set_size_assignment = np.int(self.k/2)
+
+
         
     def generate_outcome_variable(self, binary):
         """
-        Model-wise Y
-        options: binary, multilevel(discrete), continuous
-
-        Y = Theta_0 * D + g_0(X) + U
-        D = m_0(X) + V
-        Theta_0 = t_0(Z) + W
-
+        Generates output variable y and returns simulated variables
+        
+        Parameters:
+            binary (boolean): If True output is going to be binary, otherwise
+                continuous. 
+        
+        ...
+        
+        Returns:
+            tuple
         """
         
         if not binary:
@@ -65,7 +81,7 @@ class SimData:
               
         return y, self.X, self.D, realized_treatment_effect
 
-    def generate_covariates(self, categorical_covariates, nonlinear = True, skew = True):
+    def generate_covariates(self, categorical_covariates, nonlinear = True, skew = False):
 
         """
         Generates the covariates matrix and its non-linear transformation
@@ -77,6 +93,9 @@ class SimData:
                 and the second the number of categories; or a list with one int
                 and a list of ints, where the list of ints includes the 
                 different number of categories wanted.
+            nonlinear (boolean): Makes relation of y ~ X non-linear and is 
+                set to be True
+            skew (boolean): Under construction, always set to False.
         
         ...
         
@@ -193,25 +212,6 @@ class SimData:
         else:
             raise ValueError("categorical_covariates needs to be either an int, a list of 2 ints, or a list of one int and a list of ints. \nMake sure that it is a list of length 2 or a single int" )
                 
-        
-#        if categorical_covariates >= 1:
-#            """
-#            Categorical realizations of X.
-#            The idea is to use some standardize some x element of X in [0,1] and then use that as p parameter for a bernoulli random variable.
-#            Repeatedly sum the realization and treat as category.
-#            Seed allows for different bernoulli realizations :)
-#            So far transforms all components of X.
-#            """
-#
-#            for i in range(len(X)):
-#                category = 0                                                                     # reset for every iteration
-#                z = standardize(X[i], 1, 0)                                                      # vector
-#            
-#            for j in range()
-#            
-#            for j in range(categorical_covariates):
-#                    category += np.random.binomial(1, z)                                         # bernoulli rv is binomial rv with n = 1
-#                X[i] = category
 
         self.X = X
 
@@ -255,7 +255,15 @@ class SimData:
                                 
                 
         else:
-            a = np.dot(self.X, self.weights_treatment_assignment)    # X*weights -> a (Nx1 vector)
+            # Creating index for selection of covariates for assignment
+            a_idx = np.concatenate((np.zeros(self.k - self.z_set_size_assignment),np.ones(self.z_set_size_assignment)))
+            np.random.shuffle(a_idx)
+            # Selecting covariates 
+            X_a = self.X[:, a_idx == 1].copy()
+            
+            noise = np.random.uniform(0,0.25, self.N)
+                        
+            a = np.dot(X_a, self.weights_treatment_assignment[a_idx == 1]) + noise   # X*weights -> a (Nx1 vector)
             
             try:
                 # get value that adjusts z and thus propensity scores 
@@ -276,6 +284,8 @@ class SimData:
             # normalizing 'a' vector and adjust if chosen
             z = (a - a_mean) / a_sigma + z_adjustment    
             
+#            z = standardize(a, 2,-2)
+            
             # using normalized vector z to get probabilities from normal pdf
             # to later assign treatment with binomial in D
             m_0 = stats.norm.cdf(z)
@@ -290,10 +300,7 @@ class SimData:
         return None
 
     def visualize_correlation(self):
-        """
-        Generates Correlation Matrix of the Covariates
-        :return:
-        """
+        """ Generates Correlation Matrix of the Covariates """
 
         corr = np.corrcoef(self.X, rowvar = False)
         sns.heatmap(corr, annot = True)
@@ -307,6 +314,52 @@ class SimData:
                                   discrete_heterogeneity, intensity):
 
         """
+        Generates chosen kinds of treatment effects
+        
+        Parameters:
+            constant_pos (boolean): If True, the treatment effect is a positive
+                constant.
+                (default is True)
+            constant_neg (boolean): If True, the treatment effect is a negative
+                constant.
+                (default is False)
+            heterogeneous_pos (boolean): If True, the treatment effect is 
+                positive and heterogeneous, i.e. it depends on a number of 
+                covariates and varries in size. 
+                (default is False)
+            heterogeneous_neg (boolean): If True, the treatment effect is 
+                negative and heterogeneous, i.e. it depends on a number of 
+                covariates and varries in size.
+                (default is False)
+            no_treatment (boolean): If True, then there is no treatment effect.
+                (default is False)
+            discrete_heterogeneous (boolean): If True, then the treatment 
+                effect consists of 2 values of different size. The size 
+                is determined by a subset of covariates.
+                (default is False)
+            treatment_option_weights (list): List of length 6 with weights of 
+                wanted treatment effects in the following order:
+                [const_pos, const_neg, heterogeneous_pos, heterogeneous_neg, 
+                no_treatment, discrete_heterogeneous]. Its values need to sum 
+                up to 1. If chosen, the values overwrite the boolean parameters 
+                for each treatment effect.
+                (default is None)
+            intensity (int or float): Value affects the size of the treatment 
+                effect. Needs to be between 1 and 10. Formula for the actual
+                magnitude of the treatment effects are: 
+                const: intensity*0.1, heterogeneous: [0, intensity*0.2]
+                discrete_heterogeneous: {intensity*0.05, intensity*0.1}
+                (default is 5)
+                
+        When creating the treatment effect, there are two ways to choose which 
+        kind of effects are used. Either one sets all treatment effect booleans
+        that are wanted to True and then they are equally weighted created, or
+        one gives a list of length 6 with weights of the wanted distribution of 
+        effects to the parameter treatment_option_weights, which overwrites 
+        whatever booleans where chosen before. 
+        
+        Returns:
+            None
         """
 
         # ratio list: [constant, heterogeneity, negative, no_treatment] (treatment_option_weights)
@@ -401,7 +454,7 @@ class SimData:
             # (2) Standardize the treatment effet within the interval [0,intensity*0.2]
             
             # creating index vector that assigns which covariates are part of Z
-            h_idx = np.concatenate((np.zeros(self.k - self.z_set_size),np.zeros(self.z_set_size)))
+            h_idx = np.concatenate((np.zeros(self.k - self.z_set_size_treatment),np.ones(self.z_set_size_treatment)))
             np.random.shuffle(h_idx)
             
             X_h = self.X[:,h_idx == 1].copy()
@@ -430,7 +483,7 @@ class SimData:
         if discrete_heterogeneity:
             ### assigning randomly which covariates affect treatment effect
             # creating index vector
-            dh_idx = np.concatenate((np.zeros(self.k - self.z_set_size),np.ones(self.z_set_size)))
+            dh_idx = np.concatenate((np.zeros(self.k - self.z_set_size_treatment),np.ones(self.z_set_size_treatment)))
             np.random.shuffle(dh_idx)
             
             # choosing covariates in Z
@@ -515,33 +568,6 @@ class SimData:
     
     def get_treatment_effect(self):
         return self.treatment_effect
-    
-#    def visualize_distribution(self, y, treatment):
-#        """
-#        input: outcome variable y_treated, y_not_treated, treatment
-#        :return: Depict
-#        # Add histogram data
-#    
-#        x1 = y[self.D == 0]
-#        x2 = y[self.D == 1]
-#        #x2 = treatment
-#        s Output Distribution
-#        """
-#
-#        # Group data together
-#        hist_data = [x1, x2]
-#
-#        group_labels = ['No Treatment Assignment', 'Treatment Assigment']
-#
-#        # Create distplot with custom bin_size
-#        bin_s = list(np.arange(-50, 50)/10)
-#        fig = ff.create_distplot(hist_data, group_labels)#, bin_size = bin_s)
-#
-#        # Plot!
-#        # Adjust title, legend
-#        plt.interactive(False)
-#        return plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
-
 
 
 
@@ -552,27 +578,44 @@ class SimData:
 class UserInterface:
     '''
     Class to wrap up all functionalities and give user just the functions that are 
-    necessary to create the wanted variables y, X, and treatment
+    necessary to create the wanted variables y, X, D, and treatment.
     '''
-    def __init__(self, N, k, seed = None, skewed_covariates = False, categorical_covariates = None):
+    def __init__(self, N, k, seed = None, categorical_covariates = None):
         '''
-        Input:  N, Int with number of observations
-                k, Int with number of covariates 
+        Initilizes needed Classes and generates covariates
         
-        Initilizes UserInterface class with number of observations N and number of covariates k.
-        Generates Nxk matrix "X" with values for each covariate for all observations and saves 
-        it in object s
-        Additional options for covariates X:
-            - Skewness
-            - Categories
+        Parameters:
+            N (int): Number of observations
+            k (int): Number of covariates
+            seed (int): Random seed to allow reproducing of results
+                (default is None)
+            categorical_covariates (int or list): Either an int, indicating the
+                number of categories that all covariates are made of; a list 
+                with 2 ints, the first int indicating the number of covariates 
+                and the second the number of categories; or a list with one int
+                and a list of ints, where the list of ints includes the 
+                different number of categories wanted.
+                
+        Attributes:
+            weights_treatment_assignment (numpy array): Weight vector, drawn 
+                from a uniform distribution U(0,1), of length k. It is used to 
+                weight covariates when assigning treatment non-randomly and 
+                when creating heterogeneous treatment effects.
+            weights_covariates_to_outputs (numpy array) Weight vector, drawn 
+                from a beta distribution Beta(1,5), of length k. It is used to 
+                weight covariate importance when creating output y from X.
+            z_set_size_assignment (int): Number of covariates in subset Z of X
+                that are used to assign treatment non-randomly.
+            z_set_size_treatment (int): Number of covariates in subset Z of X 
+            that are used to create heterogeneous treatment effects. 
         '''
 
         self.backend = SimData(N, k, seed)
-        self.backend.generate_covariates(skew = skewed_covariates, categorical_covariates = categorical_covariates)
-        #self.backend.plot_covariates()
+        self.backend.generate_covariates(categorical_covariates = categorical_covariates)
+        
         
     def generate_treatment(self, random_assignment = True, 
-                           assignment_prob = 0.5, 
+                           assignment_prob = 0.5,
                            constant_pos = True, 
                            constant_neg = False,
                            heterogeneous_pos = False, 
@@ -582,27 +625,69 @@ class UserInterface:
                            treatment_option_weights = None,
                            intensity = 5):
         '''
-        Input:  random_assignment, Boolean to indicate if treatment assignment should be random 
-                or dependent on covariates
-                
-                constant, Boolean allow for constant treatment effect 
-                
-                heterogeneous, Boolean allow for heterogeneous treatment effects that 
-                depend on covariates
-                
-                negetive, Boolean allow treatment effects to be negetive, drawn from U[-1,0]
-                
-                no_treatment, Boolean allow treatment effect to be zero when assigned
-                
-                treatment_option_weights, List-like object of length 4, with corresponding weights 
-                summing up to 1 [constant, heterogeneous, negative, no_treatment], e.g. [0, 0.5, 0.1, 0.4]
-                
+        Assigns and generates treatment effect        
         
-        Generates treatment assignment array "D" and treatment effect array "treatment_effect"
-        ans saves them as self. internal variables in s 
+        Parameters:
+            random_assignment (boolean): If True, treatment is assigned randomly 
+                according to assignment_prob parameter. If False, treatment 
+                assignment is determined depending on covariates. 
+                (default is True)
+            assignment_prob (float or string): The probability with which 
+                treatment is assigned. In the case of random assignment, it can
+                be a float with 0 < prob < 1. If assignment is not random it
+                should be one of the following strings: 'low', 'medium', 'high'.
+                The strings stand for the values 0.35, 0.5, 0.65 respectively
+                and can also be used in the non-random case.
+                (default is 0.5)
+            constant_pos (boolean): If True, the treatment effect is a positive
+                constant.
+                (default is True)
+            constant_neg (boolean): If True, the treatment effect is a negative
+                constant.
+                (default is False)
+            heterogeneous_pos (boolean): If True, the treatment effect is 
+                positive and heterogeneous, i.e. it depends on a number of 
+                covariates and varries in size. 
+                (default is False)
+            heterogeneous_neg (boolean): If True, the treatment effect is 
+                negative and heterogeneous, i.e. it depends on a number of 
+                covariates and varries in size.
+                (default is False)
+            no_treatment (boolean): If True, then there is no treatment effect.
+                (default is False)
+            discrete_heterogeneous (boolean): If True, then the treatment 
+                effect consists of 2 values of different size. The size 
+                is determined by a subset of covariates.
+                (default is False)
+            treatment_option_weights (list): List of length 6 with weights of 
+                wanted treatment effects in the following order:
+                [const_pos, const_neg, heterogeneous_pos, heterogeneous_neg, 
+                no_treatment, discrete_heterogeneous]. Its values need to sum 
+                up to 1. If chosen, the values overwrite the boolean parameters 
+                for each treatment effect.
+                (default is None)
+            intensity (int or float): Value affects the size of the treatment 
+                effect. Needs to be between 1 and 10. Formula for the actual
+                magnitude of the treatment effects are: 
+                const: intensity*0.1, heterogeneous: [0, intensity*0.2]
+                discrete_heterogeneous: {intensity*0.05, intensity*0.1}
+                (default is 5)
         
-        return: None
-        '''
+        Treatment assignment can be done randomly or determined by a subset Z of 
+        covariates. The assignment probability can be freely chosen between 0 
+        and 1 in the random case and from 3 levels ('low','medium','high') in 
+        the non-random case.
+        When creating the treatment effect, there are two ways to choose which 
+        kind of effects are used. Either one sets all treatment effect booleans
+        that are wanted to True and then they are equally weighted created, or
+        one gives a list of length 6 with weights of the wanted distribution of 
+        effects to the parameter treatment_option_weights, which overwrites 
+        whatever booleans where chosen before. 
+        
+        Returns:
+            None
+
+'''
         self.backend.generate_treatment_assignment(random_assignment, assignment_prob)
         self.backend.generate_treatment_effect(treatment_option_weights, constant_pos,
                                                constant_neg, heterogeneous_pos, 
@@ -613,13 +698,23 @@ class UserInterface:
 
     def output_data(self, binary = False):
         '''
+        Generates output variable y and returns simulated variables
+        
+        Parameters:
+            binary (boolean): If True output is going to be binary, otherwise
+                continuous. 
+                (default is False)
+        
         Generates output array "y" the following way: Y = Theta_0 * D + g_0(X) + U,
         where Theta_O is the treatment effect of each observation, D the dummy vector
         for assigning treatment, g_0() the non_linear transformation function, and U
         a normal-distributed noise-/error term
         
-        return: y, X, treatment_effect
-         '''                
+        Returns:
+            tuple: A tuple with variables y, X, assignment_vector, 
+                treatment_vector
+        '''                
+
         return self.backend.generate_outcome_variable(binary)
     
     def plot_covariates_correlation(self):
@@ -639,6 +734,21 @@ class UserInterface:
         return self.backend.weights_covariates_to_outputs
     
     def get_treatment_effect_type(self):
+        '''
+        Gives a vector with the type of treatment effect of each observation
+        
+        Treatment types are accordingly:
+            0 No treatment assigned
+            1 positive constant effect
+            2 negative constant effect
+            3 positive heterogeneous effect
+            4 negative heterogeneous effect
+            5 no treatment effect (but assigned)
+            6 discrete heterogeneous effect
+            
+        Returns:
+            numpy array: n*1 array with treatment type of each observation
+        '''
         return self.backend.treatment_effect_type
         
     def set_weights_treatment_assignment(self, new_weight_vector):
@@ -653,11 +763,43 @@ class UserInterface:
         
         self.backend.weights_covariates_to_outputs= np.array(new_weight_vector)
         
-    def set_subset_z_size(self, new_size):
+    def set_subset_z_size_treatment(self, new_size):
+        '''
+        Adjusts number of covariates used to create heterogeneous treatment
+        
+        Parameters:
+            new_size (int): Wanted number of covariates to determine 
+                heterogeneous treatment effects. Needs to be in set {1,...,k}.
+        
+        For the heterogeneous treatment effects, the resulting effects depend
+        on values of covariates in a subset Z of X. This method adjusts how 
+        many covariates are randomly chosen to be in Z. Apply before using 
+        generate_treatment().
+        '''
+        
         if new_size < 1 or new_size > self.backend.get_k():
             raise ValueError('Size of subset Z needs to be within [1,k]')
             
-        self.backend.z_set_size = new_size
+        self.backend.z_set_size_treatment = new_size
+
+    def set_subset_z_size_assignment(self, new_size):
+        '''
+        Adjusts number of covariates used to non-randomly assign treatment 
+        
+        Parameters:
+            new_size (int): Wanted number of covariates to determine 
+                treatment assignment. Needs to be in set {1,...,k}.
+        
+        Non-random treatment assignment depends on values of covariates in a 
+        subset Z of X. This method adjusts how many covariates are randomly
+        chosen to be in Z. Apply before using generate_treatment()
+        '''
+        
+        if new_size < 1 or new_size > self.backend.get_k():
+            raise ValueError('Size of subset Z needs to be within [1,k]')
+            
+        self.backend.z_set_size_assignment = new_size
+
         
     def __str__(self):
         return "N = " + str(self.backend.get_N()) + ", k = " + str(self.backend.get_k())
