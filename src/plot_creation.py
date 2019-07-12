@@ -3,7 +3,8 @@
 from opossum import UserInterface
 from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x 
 import numpy as np
-#from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 """
 User Input: 
@@ -18,21 +19,21 @@ if specified use get function for g_0(x), D
 
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity=10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity=10)
 y, X, assignment, treatment = u.output_data()
 
 
 single_treatment_effect_plt(treatment,assignment,'Just Positive heterogeneous')
 
 u = UserInterface(100000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0.5, 0.5, 0], intensity=10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0.5, 0.5, 0, 0], intensity=10)
 y, X, assignment, treatment = u.output_data()
 
 
 single_treatment_effect_plt(treatment,assignment,'50:50 pos/neg heterogeneous')
 
 u = UserInterface(100000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0.2, 0, 0.4, 0.3, 0.1], intensity=10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0.2, 0, 0.4, 0.3, 0.1, 0], intensity=10)
 y, X, assignment, treatment = u.output_data()
 
 single_treatment_effect_plt(treatment,assignment,'mix')
@@ -53,8 +54,11 @@ u.plot_covariates_correlation()
 
 ##### propensity score plot
 u = UserInterface(10000,10, seed=5)
-u.generate_treatment(random_assignment=False, assignment_prob = 'high', treatment_option_weights = [1, 0, 0, 0, 0, 0])
+u.generate_treatment(random_assignment=False,non_linear_assignment=True, 
+                     assignment_prob = 'medium', treatment_option_weights = [1, 0, 0, 0, 0, 0])
 y, X, assignment, treatment = u.output_data()
+
+prop_score_conditioned = u.get_propensity_scores()
 
 print('Average of propensity scores:' + str(np.mean(u.get_propensity_scores())))
 
@@ -63,7 +67,7 @@ u.generate_treatment(random_assignment=True, assignment_prob = 'high',  treatmen
 y, X, assignment, treatment = u.output_data()
 
 prop_score_random = u.get_propensity_scores()
-figure = propensity_score_plt(prop_score_conditioned, prop_score_random)
+propensity_score_plt(prop_score_predictions_rf,prop_score_random)
 
 
 
@@ -121,10 +125,8 @@ output_difference_plt(y_not_treated, y_treated)
 
 ### binary
 u = UserInterface(10000,10, seed=15)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0], intensity=5)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity=5)
 y, X, assignment, treatment = u.output_data(True)
-
-#u.s.realized_treatment_effect
 
 y_treated = y[assignment==1]
 y_not_treated = y[assignment==0]
@@ -134,17 +136,17 @@ output_difference_plt(y_not_treated, y_treated, binary = True)
 
 
 ##### Inverse probability weighting
-u = UserInterface(10000,10, seed=12)
-u.generate_treatment(random_assignment=False, treatment_option_weights = [1, 0, 0, 0, 0])
+u = UserInterface(10000,20, seed=12)
+u.generate_treatment(random_assignment=False, treatment_option_weights = [1, 0, 0, 0, 0, 0])
 y, X, assignment, treatment = u.output_data(False)
 
 
-## setting up logistic regression    
-#lr = LogisticRegression()
-## fit model to data
-#lr.fit(X, assignment)
-## predict propensity scores D ~ X
-#prop_score_predictions = lr.predict_proba(X)[:,1]
+# setting up logistic regression    
+lr = LogisticRegression()
+# fit model to data
+lr.fit(X, assignment)
+# predict propensity scores D ~ X
+prop_score_predictions = lr.predict_proba(X)[:,1]
 
 
 #    propensity_score_plt(prop_score_predictions, u.s.propensity_score )
@@ -164,7 +166,7 @@ def inverse_probability_weighting(prop_score_predictions, assignment, y):
     
     return tau
 
-ipw_ate_estimate = inverse_probability_weighting(u.get_propensity_scores(), assignment, y)
+ipw_ate_estimate = inverse_probability_weighting(prop_score_predictions, assignment, y)
 
 simple_ate_estimate = np.mean(y[assignment==1]) - np.mean(y[assignment==0])
 
