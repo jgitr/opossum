@@ -2,7 +2,8 @@ from scipy import random, stats
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from helpers import standardize, is_pos_def, adjusting_assignment_level, revert_string_prob
+from helpers import standardize, is_pos_def, adjusting_assignment_level, \
+                    revert_string_prob, relation_fct
 
 class SimData:
     """
@@ -44,47 +45,11 @@ class SimData:
         self.z_set_size_assignment = np.int(self.k/2)
 
 
-        
-    def generate_outcome_variable(self, binary):
-        """
-        Generates output variable y and returns simulated variables
-        
-        Parameters:
-            binary (boolean): If True output is going to be binary, otherwise
-                continuous. 
-        
-        ...
-        
-        Returns:
-            tuple
-        """
-        
-        if not binary:
-            realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
-            y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
-        
-        if binary:
-            # generating y as probability between 0.1 and 0.9
-            y = self.g_0_X + self.generate_noise()
-            y_probs = standardize(y, 0.1, 0.9)
-            # generate treatment effect as probability
-            
-            realized_treatment_effect = self.generate_realized_treatment_effect()/5 
-            # max. range of treatment effect is [-2,2] (with intensity 10 and only choosing pos. or neg. effect)
-            # thus dividing by 5 assures that additional probability is at most 0.4
-            
-            
-            y_probs += realized_treatment_effect
-            y_probs = np.clip(y_probs, 0, 1)
-            y = np.random.binomial(1, y_probs, self.N)
-            
-              
-        return y, self.X, self.D, realized_treatment_effect
 
-    def generate_covariates(self, categorical_covariates, nonlinear = True, skew = False):
+    def generate_covariates(self, categorical_covariates):
 
         """
-        Generates the covariates matrix and its non-linear transformation
+        Generates the covariates matrix 
         
         Parameters:
             categorical_covariates (int or list): Either an int, indicating the
@@ -92,11 +57,7 @@ class SimData:
                 with 2 ints, the first int indicating the number of covariates 
                 and the second the number of categories; or a list with one int
                 and a list of ints, where the list of ints includes the 
-                different number of categories wanted.
-            nonlinear (boolean): Makes relation of y ~ X non-linear and is 
-                set to be True
-            skew (boolean): Under construction, always set to False.
-        
+                different number of categories wanted.        
         ...
         
         Returns:
@@ -124,25 +85,9 @@ class SimData:
         # 2)
         mu = np.repeat(0, self.k)
 
-
         X = np.random.multivariate_normal(mu, sigma, self.N)
-        
-        
-        if skew:
-            def skew_data(x):
-                x[x < 1] = x[x < 1] - 1
-                x[x >= 1] = np.log(x[x >= 1])
-                return x
-            X = skew_data(X)
 
-
-        if nonlinear:
-            # transforming by cos(X*weights)²
-            self.g_0_X = np.cos(np.dot(X,self.weights_covariates_to_outputs))**3 + 0.2*np.dot(X,self.weights_covariates_to_outputs)
-        else:
-            # If not nonlinear, then g_0(X) is just the identity 
-            self.g_0_X = np.dot(X,np.repeat(1/self.k,self.k))  # dim(X) = n * k -> need to vector multiply with vector shaped [k,1]
-            
+        
         ### Categorical variables ###
         
         if categorical_covariates == None:
@@ -228,6 +173,7 @@ class SimData:
         return None
 
 
+
     def generate_treatment_assignment(self, random, assignment_prob):
         
         """
@@ -310,13 +256,6 @@ class SimData:
         
         return None
 
-    def visualize_correlation(self):
-        """ Generates Correlation Matrix of the Covariates """
-
-        corr = np.corrcoef(self.X, rowvar = False)
-        sns.heatmap(corr, annot = True)
-        plt.show()
-        return None
 
 
     def generate_treatment_effect(self, treatment_option_weights, constant_pos, 
@@ -358,8 +297,8 @@ class SimData:
             intensity (int or float): Value affects the size of the treatment 
                 effect. Needs to be between 1 and 10. Formula for the actual
                 magnitude of the treatment effects are: 
-                const: intensity*0.1, heterogeneous: [0, intensity*0.2]
-                discrete_heterogeneous: {intensity*0.05, intensity*0.1}
+                const: intensity*0.2, heterogeneous: [0, intensity*0.4]
+                discrete_heterogeneous: {intensity*0.1, intensity*0.2}
                 (default is 5)
                 
         When creating the treatment effect, there are two ways to choose which 
@@ -447,7 +386,7 @@ class SimData:
             # Option 1
             # Rules: Theta_0 = constant  (c) with c = 0.2
             # constant is independent from covariates 
-            con = 0.1*intensity #  constant value for treatment effect
+            con = 0.2*intensity #  constant value for treatment effect
             
             theta_combined[n_idx == 1] = con
 
@@ -455,7 +394,7 @@ class SimData:
             # Option 2
             # Rules: Theta_0 = negative constant  (c) with c = -0.2
             # constant is independent from covariates 
-            con = -0.1*intensity #  constant value for treatment effect
+            con = -0.2*intensity #  constant value for treatment effect
             
             theta_combined[n_idx == 2] = con
 
@@ -479,7 +418,7 @@ class SimData:
             gamma = np.sin(np.dot(X_h, weight_vector_adj)) + w  # one gamma for each observation in n
             
             # (2) Standardize on [0,g(intensity)], g(): some function e.g. g(x)=0.2x
-            theta_option2 = standardize(gamma, intensity*0.2, 0)
+            theta_option2 = standardize(gamma, intensity*0.4, 0)
             # calculating percentage quantile of negative treatment effect weights 
             quantile_neg = treatment_option_weights[3]/(treatment_option_weights[2]+ treatment_option_weights[3])
             # get quantile value that splits distribution into two groups
@@ -517,9 +456,9 @@ class SimData:
             # assigning low and high treatment outcome 
             theta_dh = np.random.binomial(1,dh_effect_prob).astype(float)
             
-            low_effect = 0.05 * intensity
+            low_effect = 0.1 * intensity
             
-            high_effect = 0.1 * intensity
+            high_effect = 0.2 * intensity
                 
             theta_dh[theta_dh == 0] = low_effect
             
@@ -554,6 +493,74 @@ class SimData:
         :return: One-dim. array of normally distributed rv with 0 and 1
         """
         return np.random.normal(0, 1, self.N)
+
+
+
+    def generate_outcome_variable(self, binary, x_y_relation):
+        """
+        Generates g_0(X), output variable y and returns simulated variables
+        
+        Parameters:
+            binary (boolean): If True output is going to be binary, otherwise
+                continuous. 
+            x_y_relation (string): Chooses the simulated relationship between 
+                X and y. Possible values are: 
+                'linear_simple', 'linear_interaction', 
+                'partial_nonlinear_simple', 'partial_nonlinear_interaction',
+                'nonlinear_simple', 'nonlinear_interaction'  
+
+        ...
+        
+        Returns:
+            tuple
+        """
+        # Creating random interaction terms of covariates
+        interaction_idx_1 = np.random.choice(np.arange(self.k),int(np.sqrt(self.k)))
+        interaction_idx_2 = np.random.choice(np.arange(self.k),int(np.sqrt(self.k)))
+        
+        self.X_interaction = self.X[:,interaction_idx_1]*self.X[:,interaction_idx_2]
+        self.weights_interaction = self.weights_covariates_to_outputs[interaction_idx_1]
+        
+        try:
+            self.g_0_X = relation_fct(self, x_y_relation)
+        except TypeError:
+            raise ValueError('x_y_relation needs to be one of the following ' 
+                             'strings:\n"linear_simple", "linear_interaction", ' 
+                             '"partial_nonlinear_simple", ' 
+                             '"partial_nonlinear_interaction", '
+                             '"nonlinear_simple", "nonlinear_interaction"')
+                
+        if not binary:
+            realized_treatment_effect = self.generate_realized_treatment_effect() # Theta_0 * D
+            y = realized_treatment_effect + self.g_0_X + self.generate_noise()  # * g_0(x) + U
+        
+        if binary:
+            # generating y as probability between 0.1 and 0.9
+            y = self.g_0_X + self.generate_noise()
+            y_probs = standardize(y, 0.1, 0.9)
+            # generate treatment effect as probability
+            
+            realized_treatment_effect = self.generate_realized_treatment_effect()/10 
+            # max. range of treatment effect is [-4,4] (with intensity 10 and only choosing pos. or neg. effect)
+            # thus dividing by 10 assures that additional probability is at most 0.4
+            
+            
+            y_probs += realized_treatment_effect
+            y_probs = np.clip(y_probs, 0, 1)
+            y = np.random.binomial(1, y_probs, self.N)
+            
+              
+        return y, self.X, self.D, realized_treatment_effect
+
+
+
+    def visualize_correlation(self):
+        """ Generates Correlation Matrix of the Covariates """
+
+        corr = np.corrcoef(self.X, rowvar = False)
+        sns.heatmap(corr, annot = True)
+        plt.show()
+        return None
 
     def __str__(self):
         return "N = " + str(self.N) + ", k = " + str(self.k)
@@ -709,27 +716,43 @@ class UserInterface:
 
         return None
 
-    def output_data(self, binary = False):
+    def output_data(self, binary = False, x_y_relation = 'partial_nonlinear_simple'):
         '''
-        Generates output variable y and returns simulated variables
+        Generates g_0(X), output variable y and returns simulated variables
         
         Parameters:
             binary (boolean): If True output is going to be binary, otherwise
                 continuous. 
                 (default is False)
-        
+            x_y_relation (string): Chooses the simulated relationship between 
+                X and y. Possible values are: 
+                'linear_simple', 'linear_interaction', 
+                'partial_nonlinear_simple', 'partial_nonlinear_interaction',
+                'nonlinear_simple', 'nonlinear_interaction'  
+                (default is 'partial_nonlinear_simple')
+                
+        When simulating a dataset, there are different options to transform X
+        into y. It can be linear or non-linear in different ways. The options
+        that can be chosen for x_y_relation correspond to the following 
+        functions:
+        linear -> y ~ X
+        partial non-linear -> y ~ 2.5*cos(X)^3 + 0.5*X
+        non-linear -> y ~ 3*cos(X)^3 + 0.6*X
+        Depending on the addition "simple" or "interaction" X consists only of
+        single covariates x_i or additionally on random interaction terms of 
+        some of the covariates x_i*x_j; i,j in{1,...,k}
         Generates output array "y" the following way: 
         Y = Theta_0 * D + g_0(X) + U,
         where Theta_O is the treatment effect of each observation, D the dummy 
-        vector for assigning treatment, g_0() the non_linear transformation 
-        function, and U a normal-distributed noise-/error term
+        vector for assigning treatment, g_0() the transformation function, and 
+        U a normal-distributed noise-/error term
         
         Returns:
             tuple: A tuple with variables y, X, assignment_vector, 
-                treatment_vector
+                    treatment_vector
         '''                
 
-        return self.backend.generate_outcome_variable(binary)
+        return self.backend.generate_outcome_variable(binary, x_y_relation)
     
     def plot_covariates_correlation(self):
         '''

@@ -21,6 +21,8 @@ if __name__ == "__main__":
                          # no_treatment, discrete_heterogeneous] percentage of 
                          # each
                          intensity = 5)
-    y, X, assignment, treatment = u.output_data(binary=False)
+    y, X, assignment, treatment = u.output_data(binary=False, 
+                                                x_y_relation = 
+                                                'partial_nonlinear_simple')
 
 

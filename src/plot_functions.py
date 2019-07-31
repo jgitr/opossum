@@ -180,7 +180,23 @@ def scatter_plot_y_x(x,y):
     sns.despine(left=False, right=True, top=True)
     
     sns.scatterplot(x, y, size=1)
+        
+    plt.setp(ax) 
+    plt.tight_layout()
+
+def scatter_plot_y_x_treatment_difference(x,y,assignment):
+    fig, ax = plt.subplots()
     
+#    ax.set_title()
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+#    ax.set_xticks(list(np.arange(-0.3,0.4,0.1)))
+    #ax.set_xlim([0.1,0.3])
+    
+    sns.despine(left=False, right=True, top=True)
+    
+    sns.scatterplot(x[assignment==0], y[assignment==0], size=1)
+    sns.scatterplot(x[assignment==1], y[assignment==1], size=1)
 #    sns.distplot(only_treat, ax = ax, hist=True, kde=False, 
 #         bins=21, color = 'darkblue', 
 #         hist_kws={'edgecolor':'black'},
@@ -188,6 +204,7 @@ def scatter_plot_y_x(x,y):
     
     plt.setp(ax) 
     plt.tight_layout()
+
 
 
 

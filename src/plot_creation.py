@@ -1,21 +1,11 @@
 #import os
 #os.chdir(r'/home/tobias//github_repositories/predictiveanalytics/src')
 from opossum import UserInterface
-from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x 
+from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x, scatter_plot_y_x_treatment_difference 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
-"""
-User Input: 
-N, k, options / effect type, assignment type (random...)
-
-Output:
-Y, X, Treatment Effect = theta_0 * D
-Correlation Matrix
-if specified use get function for g_0(x), D
-
-"""
 
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
@@ -40,11 +30,22 @@ single_treatment_effect_plt(treatment,assignment,'mix')
 
 
 ##### scatter plot y~X without treatment
-u = UserInterface(10000,10, seed=5, categorical_covariates = 5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 1, 0])
-y, X, assignment, treatment = u.output_data()
+u = UserInterface(10000,100, seed=8, categorical_covariates = None)
+u.generate_treatment(random_assignment=True, 
+                     treatment_option_weights = [0, 0, 0, 0, 1, 0])
+y, X, assignment, treatment = u.output_data(x_y_relation = 'nonlinear_simple')
 
 scatter_plot_y_x(np.dot(X, u.get_weigths_covariates_to_outputs()),y)
+
+##### scatter plot y~X with treatment
+u = UserInterface(10000,100, seed=8, categorical_covariates = None)
+u.generate_treatment(random_assignment=True, 
+                     treatment_option_weights = [0, 0, 1, 0, 0, 0],
+                     intensity = 10)
+y, X, assignment, treatment = u.output_data(x_y_relation = 'nonlinear_simple')
+
+scatter_plot_y_x_treatment_difference(np.dot(X, u.get_weigths_covariates_to_outputs()),
+                                      y, assignment)
 
 scatter_plot_y_x(X[:,7],y)
    
@@ -113,9 +114,10 @@ propensity_score_plt(prop_score_predictions_rf,prop_score_random)
 #### Output differences treated/not_treated plots
 
 ### continous 
-u = UserInterface(10000,10, seed=7, categorical_covariates = [1, [2,5]])
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity = 10)
-y, X, assignment, treatment = u.output_data(False)
+u = UserInterface(10000,10, seed=7, categorical_covariates = None)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], 
+                     intensity = 5)
+y, X, assignment, treatment = u.output_data(False, x_y_relation = 'nonlinear_simple')
 
 
 y_treated = y[assignment==1]
@@ -125,7 +127,8 @@ output_difference_plt(y_not_treated, y_treated)
 
 ### binary
 u = UserInterface(10000,10, seed=15)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity=5)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], 
+                     intensity=5)
 y, X, assignment, treatment = u.output_data(True)
 
 y_treated = y[assignment==1]
