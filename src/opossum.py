@@ -164,7 +164,10 @@ class SimData:
         elif type(categorical_covariates) == list and len(categorical_covariates) == 2:
             num_cat_covariates = categorical_covariates[0]
             if num_cat_covariates > self.k:
-                raise Warning('Number of catigorical variables ({}) is greater than number of covariates ({}). \nAll {} covariates are made categorical.'.format(num_cat_covariates, self.k, self.k))
+                raise Warning("Number of catigorical variables ({}) is greater "
+                              "than number of covariates ({}). \nAll {} "
+                              "covariates are made categorical."
+                              .format(num_cat_covariates, self.k, self.k))
             
             X_cat_part = X[:,:num_cat_covariates]
             # Standardizing column wise to [0,1]
@@ -204,13 +207,20 @@ class SimData:
                     start = end
                     
             else:
-                raise ValueError("categorical_covariates needs to be either an int, a list of 2 ints, or a list of one int and a list of ints. \nMake sure that the second item of the list is an int or a list of ints")
+                raise ValueError("categorical_covariates needs to be either an "
+                                 "int, a list of 2 ints, or a list of one int "
+                                 "and a list of ints. \nMake sure that the "
+                                 "second item of the list is an int or a list "
+                                 "of ints")
             
             X[:,:num_cat_covariates] = X_categorical                
             
 
         else:
-            raise ValueError("categorical_covariates needs to be either an int, a list of 2 ints, or a list of one int and a list of ints. \nMake sure that it is a list of length 2 or a single int" )
+            raise ValueError("categorical_covariates needs to be either an int, "
+                             "a list of 2 ints, or a list of one int and a list "
+                             "of ints. \nMake sure that it is a list of length "
+                             "2 or a single int" )
                 
 
         self.X = X
@@ -274,9 +284,10 @@ class SimData:
                 
                 # making sure default of 0.5 does not give warning
                 if assignment_prob != 0.5:                    
-                    raise Warning('When assignment is not random, expected assignment_prob' 
-                                  + ' can only be \'low\': 0.35, \'medium\': 0.5,' +
-                                  'or \'high\': 0.65. Now medium is chosen ')
+                    raise Warning('When assignment is not random, expected '
+                                  'assignment_prob can only be \'low\': 0.35, '
+                                  '\'medium\': 0.5, or \'high\': 0.65. Now '
+                                  'medium is chosen ')
             
             # Using empirical mean, sd
             a_mean = np.mean(a) 
@@ -375,9 +386,11 @@ class SimData:
             # make sure it's a numpy array
             treatment_option_weights = np.array(treatment_option_weights)
             if np.around(np.sum(treatment_option_weights),3) !=1:
-                raise ValueError('Values in treatment_option_weights-vector must sum up to 1')
+                raise ValueError('Values in treatment_option_weights-vector '
+                                 'must sum up to 1')
             if len(treatment_option_weights) !=tow_length:
-                raise ValueError('Treatment_option_weights-vector must be of length {}'.format(tow_length))
+                raise ValueError('Treatment_option_weights-vector must be of '
+                                 'length {}'.format(tow_length))
             
             
             # take times N to get absolute number of each option
@@ -577,8 +590,8 @@ class SimData:
 
 class UserInterface:
     '''
-    Class to wrap up all functionalities and give user just the functions that are 
-    necessary to create the wanted variables y, X, D, and treatment.
+    Class to wrap up all functionalities and give user just the functions that 
+    are necessary to create the wanted variables y, X, D, and treatment.
     '''
     def __init__(self, N, k, seed = None, categorical_covariates = None):
         '''
@@ -705,10 +718,11 @@ class UserInterface:
                 continuous. 
                 (default is False)
         
-        Generates output array "y" the following way: Y = Theta_0 * D + g_0(X) + U,
-        where Theta_O is the treatment effect of each observation, D the dummy vector
-        for assigning treatment, g_0() the non_linear transformation function, and U
-        a normal-distributed noise-/error term
+        Generates output array "y" the following way: 
+        Y = Theta_0 * D + g_0(X) + U,
+        where Theta_O is the treatment effect of each observation, D the dummy 
+        vector for assigning treatment, g_0() the non_linear transformation 
+        function, and U a normal-distributed noise-/error term
         
         Returns:
             tuple: A tuple with variables y, X, assignment_vector, 
