@@ -26,7 +26,9 @@ class SimData:
             z_set_size_assignment (int): Number of covariates in subset Z of X
                 that are used to assign treatment non-randomly.
             z_set_size_treatment (int): Number of covariates in subset Z of X 
-            that are used to create heterogeneous treatment effects. 
+                that are used to create heterogeneous treatment effects.
+            interaction_num (int): Number of interaction terms that are 
+                randomly created if chosen in output creation. 
         '''
         if seed is not None:
             random.seed(seed) # For debugging
@@ -43,7 +45,8 @@ class SimData:
         self.z_set_size_treatment = np.int(self.k/2)
         # set size of subset Z of X for non-random treatment assignment        
         self.z_set_size_assignment = np.int(self.k/2)
-
+        # set number of covariates used for creating interaction terms of X
+        self.interaction_num = int(np.sqrt(self.k))
 
 
     def generate_covariates(self, categorical_covariates):
@@ -515,8 +518,8 @@ class SimData:
             tuple
         """
         # Creating random interaction terms of covariates
-        interaction_idx_1 = np.random.choice(np.arange(self.k),int(np.sqrt(self.k)))
-        interaction_idx_2 = np.random.choice(np.arange(self.k),int(np.sqrt(self.k)))
+        interaction_idx_1 = np.random.choice(np.arange(self.k), self.interaction_num)
+        interaction_idx_2 = np.random.choice(np.arange(self.k), self.interaction_num)
         
         self.X_interaction = self.X[:,interaction_idx_1]*self.X[:,interaction_idx_2]
         self.weights_interaction = self.weights_covariates_to_outputs[interaction_idx_1]
@@ -837,6 +840,27 @@ class UserInterface:
             
         self.backend.z_set_size_assignment = new_size
 
+    def set_interaction_num(self, new_num):
+        '''
+        Adjust number of interaction terms used in output creation
+        
+        Parameters:
+            new_num (int): Wanted number of interaction terms x_i*x_j that 
+                should be added to single covariates.
+            
+        When choosing one of the '..._interaction' options for x_y_relation
+        in output_data(), interaction_num of interaction terms are randomly 
+        created and added. The internal default value for that attribute is 
+        sqrt(k). This method changes the default value to the chosen integer.
+        Use between initilizing the class and using output_data().
+        
+        Return:
+            None
+        '''
+        if not isinstance(new_num, int):
+            raise ValueError('new_num needs to be of type int')
+        
+        self.interaction_num = new_num
         
     def __str__(self):
         return "N = " + str(self.backend.get_N()) + ", k = " + str(self.backend.get_k())
