@@ -4,8 +4,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from dml import dml_single_run
 import numpy as np
+import time
 
+start_time = time.time()
 mc_iterations = 100
+# initilizing empty arrays
 avg_treatment_effects = np.zeros(mc_iterations)
 theta_estimations = np.zeros((mc_iterations,3))
 
@@ -14,9 +17,11 @@ for i in range(mc_iterations):
     if i%10 ==0:
         print(round(i/mc_iterations,2 ))
     # generate data
-    u = UserInterface(1000,50)
-    u.generate_treatment(random_assignment=True, constant_pos=True, heterogeneous_pos=False)
-    Y, X, assignment, treatment = u.output_data(binary=False, x_y_relation='nonlinear_simple')
+    u = UserInterface(1000,100)
+    u.generate_treatment(random_assignment=True, constant_pos=True, 
+                         heterogeneous_pos=False)
+    Y, X, assignment, treatment = u.output_data(binary=False, 
+                                                x_y_relation='partial_nonlinear_simple')
     # save true treatment effects
     avg_treatment_effects[i] = np.mean(treatment[assignment==1])
     # save estimations 
@@ -25,7 +30,10 @@ for i in range(mc_iterations):
 theta_ols = theta_estimations[:,0]
 theta_naive_dml= theta_estimations[:,1]
 theta_cross_dml = theta_estimations[:,2]
-    
+ 
+duration = time.time() - start_time
+print('Duration: ' + str(round(duration,2)) + ' sec')
+
 # create plot
 fig, ax = plt.subplots()
 
