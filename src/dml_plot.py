@@ -1,25 +1,41 @@
 ### double machine learning plot
-from dml import double_ml
+from opossum import UserInterface
+import seaborn as sns
+import matplotlib.pyplot as plt
+from dml import dml_single_run
+import numpy as np
 
-dml_object = double_ml(1,2,3,1000)
+mc_iterations = 100
+avg_treatment_effects = np.zeros(mc_iterations)
+theta_estimations = np.zeros((mc_iterations,3))
 
-YY = []
-XX = []
-DD = []
-N = 1000
-MC_no = 500
-
-theta_est = dml_object.run(YY, XX, DD, N, MC_no)
-
-theta_ols       = list(map(lambda x: x[0], theta_est))
-theta_naive_dml = list(map(lambda x: x[1], theta_est))
-theta_cross_dml = list(map(lambda x: x[2], theta_est))
+# iterating to simulate and estimate mc_iterations times
+for i in range(mc_iterations):
+    if i%10 ==0:
+        print(round(i/mc_iterations,2 ))
+    # generate data
+    u = UserInterface(1000,50)
+    u.generate_treatment(random_assignment=True, constant_pos=True, heterogeneous_pos=False)
+    Y, X, assignment, treatment = u.output_data(binary=False, x_y_relation='nonlinear_simple')
+    # save true treatment effects
+    avg_treatment_effects[i] = np.mean(treatment[assignment==1])
+    # save estimations 
+    theta_estimations[i,:] = dml_single_run(Y,X,assignment)
+# extract estimations of each method
+theta_ols = theta_estimations[:,0]
+theta_naive_dml= theta_estimations[:,1]
+theta_cross_dml = theta_estimations[:,2]
     
-sns.distplot(theta_ols, bins = MC_no)
-sns.distplot(theta_naive_dml, bins = MC_no)
-sns.distplot(theta_cross_dml, bins = MC_no)
+# create plot
+fig, ax = plt.subplots()
 
-plt.savefig('dml_estimator_distribution.png')
+sns.distplot(theta_ols, bins = mc_iterations, hist=False, rug=True, label='OLS')
+sns.distplot(theta_naive_dml, bins = mc_iterations, hist=False, rug=True, label='DML naive')
+sns.distplot(theta_cross_dml, bins = mc_iterations, hist=False, rug=True, label='DML cross')
+
+ax.axvline(np.mean(avg_treatment_effects), color='r',)
+
+#plt.savefig('dml_estimator_distribution.png')
 
 
 
