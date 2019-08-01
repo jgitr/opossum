@@ -53,6 +53,36 @@ def propensity_score_plt(conditioned, random):
     #plt.savefig('propensity_score_plot.png')
 
 
+def pos_neg_heterogeneous_effect(treatment, assignment):
+    only_treat = treatment[assignment==1]
+    fig, ax = plt.subplots(1,1)
+    neg_treat = only_treat[only_treat<0]
+    pos_treat = only_treat[only_treat>=0]
+    ax.set_title('Continuous heterogeneous treatment effect')
+    ax.set_xlabel('Size of treatment effect')
+    
+    sns.despine(left=True, right=True, top=True)
+    
+    sns.distplot(neg_treat, ax = ax, hist=True, kde=False, 
+                 color = 'darkred', bins=12, 
+                 hist_kws={'edgecolor':'black'},
+                 kde_kws={'linewidth': 4},
+                 label = 'negative effect')    
+    
+    sns.distplot(pos_treat, ax = ax, hist=True, kde=False, 
+                 color = 'darkblue', bins=20,
+                 hist_kws={'edgecolor':'black'},
+                 kde_kws={'linewidth': 4},
+                 label = 'positive effect')
+    plt.legend()
+    
+    plt.setp(ax, yticks=[])    
+    plt.tight_layout()
+
+
+
+
+
 
 
 def single_treatment_effect_plt(treatment, assignment, title):
@@ -67,7 +97,7 @@ def single_treatment_effect_plt(treatment, assignment, title):
     sns.despine(left=True, right=True, top=True)
     
     sns.distplot(only_treat, ax = ax, hist=True, kde=False, 
-         bins=21, color = 'darkblue', 
+         bins=32, color = 'darkblue', 
          hist_kws={'edgecolor':'black'},
          kde_kws={'linewidth': 4})
     

@@ -418,11 +418,11 @@ class SimData:
             # Standardize on [0,g(intensity)], g(): some function e.g. g(x)=0.2x
             theta_option2 = standardize(gamma, intensity*0.4, 0)
             # calculating percentage quantile of negative treatment effect weights 
-            quantile_neg = treatment_option_weights[3] \
+            percentage_neg = treatment_option_weights[3] \
                             / (treatment_option_weights[2]+ 
                                treatment_option_weights[3])
             # get quantile value that splits distribution into two groups
-            quantile_value = np.quantile(theta_option2, quantile_neg)
+            quantile_value = np.quantile(theta_option2, percentage_neg)
             # move distribution into negative range by the amount of quantile 
             # value
             theta_option2 = theta_option2 - quantile_value

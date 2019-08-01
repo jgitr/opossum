@@ -1,11 +1,25 @@
 #import os
 #os.chdir(r'/home/tobias//github_repositories/predictiveanalytics/src')
 from opossum import UserInterface
-from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x, scatter_plot_y_x_treatment_difference 
+from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x, scatter_plot_y_x_treatment_difference, pos_neg_heterogeneous_effect 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
+u = UserInterface(10000,20, seed=5)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0.7, 0.3, 0, 0], intensity=5)
+y, X, assignment, treatment = u.output_data()
+
+pos_neg_heterogeneous_effect(treatment,assignment)
+
+plt.savefig('pos_neg_heterogeneous_treatment_effect.png')
+
+
+
+
+import os
+
+os.getcwd()
 
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
