@@ -7,7 +7,7 @@ if __name__ == "__main__":
                       # If wanted, replace None with either: int, list of 2 
                       # ints, list of 1 int and 1 list of ints, where 
                       # [num of covariates, num of categories]
-    u.generate_treatment(random_assignment = False, 
+    u.generate_treatment(random_assignment = True, 
                          assignment_prob = 0.5, 
                          constant_pos = True, 
                          constant_neg = False,
@@ -21,6 +21,8 @@ if __name__ == "__main__":
                          # no_treatment, discrete_heterogeneous] percentage of 
                          # each
                          intensity = 5)
-    y, X, assignment, treatment = u.output_data(binary=False)
+    y, X, assignment, treatment = u.output_data(binary=False, 
+                                                x_y_relation = 
+                                                'partial_nonlinear_simple')
 
 
