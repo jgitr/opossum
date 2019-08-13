@@ -705,8 +705,8 @@ class UserInterface:
             intensity (int or float): Value affects the size of the treatment 
                 effect. Needs to be between 1 and 10. Formula for the actual
                 magnitude of the treatment effects are: 
-                const: intensity*0.1, heterogeneous: [0, intensity*0.2]
-                discrete_heterogeneous: {intensity*0.05, intensity*0.1}
+                const: intensity*0.2, heterogeneous: [0, intensity*0.4]
+                discrete_heterogeneous: {intensity*0.1, intensity*0.2}
                 (default is 5)
         
         Treatment assignment can be done randomly or determined by a subset Z of 
