@@ -7,21 +7,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
     
 
-#def histogram(x1):
-#    
-#    hist_data = [x1]
-#    
-#    group_labels = ['propbensity score']#['No Treatment Assignment', 'Treatment Assigment']
-#    
-#    # Create distplot with custom bin_size
-#    bin_s = list(np.arange(-50, 50)/10)
-#    fig = ff.create_distplot(hist_data, group_labels, show_hist=False)#, bin_size = bin_s)
-#    
-#    # Plot!
-#    # Adjust title, legend
-#    plt.interactive(False)
-#    plotly.offline.plot(fig, filename='Distplot with Multiple Bin Sizes')
-
 def propensity_score_plt(conditioned, random): 
     fig, axes = plt.subplots(1,2, figsize=(8,5), sharex = False)
     
@@ -235,8 +220,41 @@ def scatter_plot_y_x_treatment_difference(x,y,assignment):
     plt.setp(ax) 
     plt.tight_layout()
 
+def scatter_transformations(y_list, X, weights):
+    g_0_X = np.dot(X,weights)
+    
+    fig, axes = plt.subplots(1,3, figsize=(12,4), sharex = False)
+    
+    fig.suptitle('y ~ X relation')
+    
+    axes[0].set_title('Linear')
+    axes[1].set_title('Partial non-linear')
+    axes[2].set_title('Non-linear')
+    
+    axes[0].set_xlabel('X * b')
+    axes[1].set_xlabel('X * b')
+    axes[2].set_xlabel('X * b')
 
+    axes[0].set_ylabel('y')
+    axes[1].set_ylabel('y')
+    axes[2].set_ylabel('y')
 
+    axes[0].set_ylim([-7,7])
+    axes[1].set_ylim([-7,7])
+    axes[2].set_ylim([-7,7])
+
+    axes[0].set_xlim([-5,5])
+    axes[1].set_xlim([-5,5])
+    axes[2].set_xlim([-5,5])
+
+    sns.scatterplot(g_0_X, y_list[0], ax=axes[0], color='darkred')
+    sns.scatterplot(g_0_X, y_list[1], ax=axes[1], color='darkblue')
+    sns.scatterplot(g_0_X, y_list[2], ax=axes[2], color='seagreen')
+
+    sns.despine(left=False, right=True, top=True)
+    
+    plt.setp(axes) 
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
 

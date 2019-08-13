@@ -1,7 +1,11 @@
-#import os
-#os.chdir(r'/home/tobias//github_repositories/predictiveanalytics/src')
+import os
+os.chdir(r'/home/tobias//github_repositories/predictiveanalytics/src')
 from opossum import UserInterface
-from plot_functions import propensity_score_plt, all_treatment_effect_plt, single_treatment_effect_plt, output_difference_plt, avg_treatment_effect_plt, scatter_plot_y_x, scatter_plot_y_x_treatment_difference, pos_neg_heterogeneous_effect 
+from plot_functions import propensity_score_plt, all_treatment_effect_plt, \
+                            single_treatment_effect_plt, output_difference_plt, \
+                            avg_treatment_effect_plt, scatter_plot_y_x, \
+                            scatter_plot_y_x_treatment_difference, \
+                            pos_neg_heterogeneous_effect, scatter_transformations
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -16,14 +20,13 @@ plt.savefig('pos_neg_heterogeneous_treatment_effect.png')
 
 
 
-
 import os
 
 os.getcwd()
 
 #### New heterogeneous effect
 u = UserInterface(100000,10, seed=5)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], intensity=10)
+u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 0, 0, 0, 1], intensity=10)
 y, X, assignment, treatment = u.output_data()
 
 
@@ -42,12 +45,28 @@ y, X, assignment, treatment = u.output_data()
 
 single_treatment_effect_plt(treatment,assignment,'mix')
 
+##### scatter plot y~X with 3 different transformations
 
-##### scatter plot y~X without treatment
-u = UserInterface(10000,100, seed=8, categorical_covariates = None)
+
+u = UserInterface(10000,30, seed=71, categorical_covariates = None)
 u.generate_treatment(random_assignment=True, 
                      treatment_option_weights = [0, 0, 0, 0, 1, 0])
-y, X, assignment, treatment = u.output_data(x_y_relation = 'nonlinear_simple')
+
+y_linear, X, assignment, treatment = u.output_data(x_y_relation = 'linear_simple')
+y_partial_nonlinear, X, assignment, treatment = u.output_data(x_y_relation = 'partial_nonlinear_simple')
+y_nonlinear, X, assignment, treatment = u.output_data(x_y_relation = 'nonlinear_simple')
+
+y_list = [y_linear, y_partial_nonlinear, y_nonlinear]
+
+scatter_transformations(y_list, X, u.get_weigths_covariates_to_outputs())
+
+#plt.savefig('y_transformations_plot.png')
+
+##### scatter plot y~X without treatment
+u = UserInterface(10000,50, seed=8, categorical_covariates = None)
+u.generate_treatment(random_assignment=True, 
+                     treatment_option_weights = [0, 0, 0, 0, 1, 0])
+y, X, assignment, treatment = u.output_data(x_y_relation = 'partial_nonlinear_simple')
 
 scatter_plot_y_x(np.dot(X, u.get_weigths_covariates_to_outputs()),y)
 
@@ -164,6 +183,23 @@ lr = LogisticRegression()
 lr.fit(X, assignment)
 # predict propensity scores D ~ X
 prop_score_predictions = lr.predict_proba(X)[:,1]
+
+rf = RandomForestClassifier(100)
+
+treatment_transformed = treatment[assignment==1].copy()
+
+treatment_transformed[treatment_transformed==0.5] = 0
+treatment_transformed[treatment_transformed==1] = 1
+
+rf.fit(X[assignment==1],treatment_transformed)
+treatment_predictions = rf.predict(X[assignment==1])
+
+np.sum(treatment_transformed==treatment_predictions)/len(treatment_predictions)
+
+index = np.random.choice(np.arange(len(treatment_transformed)),size=len(treatment_transformed),
+                         replace=False )
+
+index[:len(treatment_transformed)/2]
 
 
 #    propensity_score_plt(prop_score_predictions, u.s.propensity_score )

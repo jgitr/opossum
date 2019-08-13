@@ -448,26 +448,27 @@ class SimData:
             # adjusting weight vector to length of Z 
             weight_vector_adj = self.weights_treatment_assignment[dh_idx == 1]
             
-            a = np.dot(X_dh,weight_vector_adj)
+            a = np.sin(np.dot(X_dh,weight_vector_adj))
+
+            a = standardize(a, 1,0) 
+            theta_dh = np.random.binomial(1,a).astype(float) * -1
+#            # normalizing 'a' vector
+#            a_mean = np.mean(a)
+#            a_sigma = np.std(a)
+#            z = (a - a_mean) / a_sigma           
+#            # create probabilities
+#            dh_effect_prob = stats.norm.cdf(z)
+#            
+#            # assigning low and high treatment outcome 
+#            theta_dh = np.random.binomial(1,dh_effect_prob).astype(float) * -1
             
-            # normalizing 'a' vector
-            a_mean = np.mean(a)
-            a_sigma = np.std(a)
-            z = (a - a_mean) / a_sigma          
-            
-            # create probabilities
-            dh_effect_prob = stats.norm.cdf(z)
-            
-            # assigning low and high treatment outcome 
-            theta_dh = np.random.binomial(1,dh_effect_prob).astype(float)
-            
-            low_effect = 0.1 * intensity
+            low_effect = 0.1 * intensity 
             
             high_effect = 0.2 * intensity
                 
             theta_dh[theta_dh == 0] = low_effect
             
-            theta_dh[theta_dh == 1] = high_effect
+            theta_dh[theta_dh == -1] = high_effect
             
             theta_combined[n_idx == 6] = theta_dh[n_idx == 6]
             
@@ -529,6 +530,7 @@ class SimData:
         
         self.X_interaction \
         = self.X[:,interaction_idx_1] * self.X[:,interaction_idx_2]
+        
         self.weights_interaction \
         = self.weights_covariates_to_outputs[interaction_idx_1]
         
@@ -549,7 +551,7 @@ class SimData:
         
         if binary:
             # generating y as probability between 0.1 and 0.9
-            y = self.g_0_X + self.generate_noise()
+            y = self.g_0_X #+ self.generate_noise()
             y_probs = standardize(y, 0.1, 0.9)
             # generate treatment effect as probability
             realized_treatment_effect = self.generate_realized_treatment_effect()/10 
