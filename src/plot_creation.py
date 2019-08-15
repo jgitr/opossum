@@ -20,7 +20,6 @@ plt.savefig('pos_neg_heterogeneous_treatment_effect.png')
 
 
 
-import os
 
 os.getcwd()
 
@@ -148,15 +147,20 @@ propensity_score_plt(prop_score_predictions_rf,prop_score_random)
 
 ### continous 
 u = UserInterface(10000,10, seed=7, categorical_covariates = None)
-u.generate_treatment(random_assignment=True, treatment_option_weights = [0, 0, 1, 0, 0, 0], 
-                     intensity = 5)
-y, X, assignment, treatment = u.output_data(False, x_y_relation = 'nonlinear_simple')
+u.generate_treatment(intensity = 5)
+
+y_continuous, X_continuous, assignment_continuous, treatment_continuous = u.output_data(False)
+y_binary, X_binary, assignment_binary, treatment_binary = u.output_data(True)
 
 
-y_treated = y[assignment==1]
-y_not_treated = y[assignment==0]
 
-output_difference_plt(y_not_treated, y_treated)
+y_treated_continuous = y_continuous[assignment_continuous==1]
+y_not_treated_continuous = y_continuous[assignment_continuous==0]
+y_treated_binary = y_binary[assignment_binary==1]
+y_not_treated_binary = y_binary[assignment_binary==0]
+
+output_difference_plt(y_treated_continuous, y_not_treated_continuous,
+                      y_treated_binary, y_not_treated_binary)
 
 ### binary
 u = UserInterface(10000,10, seed=15)

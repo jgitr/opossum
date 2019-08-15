@@ -146,38 +146,34 @@ def all_treatment_effect_plt(treatment_list, assignment_list):
     plt.tight_layout()
 
 
-def output_difference_plt(y_not_treated, y_treated, binary = False): 
-    fig, axes = plt.subplots(1,1)
+def output_difference_plt(y_treated_continuous, y_not_treated_continuous,
+                          y_treated_binary, y_not_treated_binary): 
+    fig, axes = plt.subplots(1,2, figsize=(10,4))
     
-    if binary:
-        axes.set_title('Binary output distributions')
-    else:
-        axes.set_title('Continuous Output distributions')
+   
+    axes[0].set_title('Continuous Output distributions')
+    axes[1].set_title('Binary output distributions')
     
+    axes[0].set_xlabel('y')
+    axes[1].set_xlabel('y')
 
-    
-    axes.set_ylabel('Density')
-    axes.set_xlabel('y')
+    axes[0].set_ylabel('Density')
+    axes[1].set_ylabel('Density')
         
-    sns.distplot(y_not_treated, ax=axes, hist=False, kde=True, 
-             bins=10, color = 'darkblue', 
-             hist_kws={'edgecolor':'black'},
-             kde_kws={'linewidth': 4}, 
-             label = 'y not treated')
+    sns.distplot(y_not_treated_continuous, hist=False, kde=True, ax = axes[0],
+             kde_kws={'linewidth': 4, 'color' : 'darkblue'}, label = 'y not treated')
 
-    sns.distplot(y_treated, ax=axes, hist=False, kde=True, 
-             bins=10, color = 'darkred', 
-             hist_kws={'edgecolor':'black'},
-             kde_kws={'linewidth': 4},
-             label = 'y treated')
-
-    axes.legend()    
+    sns.distplot(y_treated_continuous, hist=False, kde=True, ax = axes[0],
+             kde_kws={'linewidth': 4, 'color' : 'darkred'}, label = 'y treated')
+    
+    sns.distplot(y_not_treated_binary, hist=False, kde=True, ax = axes[1],
+             kde_kws={'linewidth': 4, 'color' : 'darkblue'}, label = 'y not treated')
+    
+    sns.distplot(y_treated_binary, hist=False, kde=True, ax = axes[1],
+             kde_kws={'linewidth': 4, 'color' : 'darkred'}, label = 'y treated')
     
     sns.despine(right=True, top=True)
-    
-    if binary:
-        plt.setp(axes, xticks=[0,1])
-    
+    plt.setp(axes[1], xticks=[0,1])
     plt.tight_layout()
 
 

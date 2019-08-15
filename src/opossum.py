@@ -32,8 +32,8 @@ class SimData:
         '''
         if seed is not None:
             random.seed(seed) # For debugging
-        self.N = N # Natural, number of observations
-        self.k = k # Natural, number of covariates
+        self.N = N #  number of observations
+        self.k = k #  number of covariates
         
         # initilizing weight vector for treatment assignment 
         # using random weights from U[0,1]
@@ -782,6 +782,9 @@ class UserInterface:
         return None
     
     def get_propensity_scores(self):
+        '''
+        Returns probabilities that were used in treatment assignment
+        '''
         return self.backend.propensity_scores
     
     def get_weights_treatment_assignment(self):
@@ -809,12 +812,19 @@ class UserInterface:
         return self.backend.treatment_effect_type
         
     def set_weights_treatment_assignment(self, new_weight_vector):
+        '''
+        Change weight vector that is applied in treatment assignment and 
+        treatment effect creation
+        '''
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
             
         self.backend.weights_treatment_assignment = np.array(new_weight_vector)
             
     def set_weights_covariates_to_outputs(self, new_weight_vector):
+        '''
+        Change weight vector that is applied in translation of X to y
+        '''
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
         
@@ -880,8 +890,8 @@ class UserInterface:
         self.interaction_num = new_num
         
     def __str__(self):
-        return "N = " + str(self.backend.get_N()) + ", k = " + \
-                str(self.backend.get_k())
+        return "N = {}, k = {} \n" .format(self.backend.get_N(),
+                                           self.backend.get_k())
 
 
 
