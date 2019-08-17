@@ -1,0 +1,6 @@
+numpy
+statsmodels
+seaborn
+matplotlib
+time
+scipy
