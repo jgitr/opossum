@@ -790,7 +790,7 @@ class UserInterface:
     def get_weights_treatment_assignment(self):
         return self.backend.weights_treatment_assignment
     
-    def get_weigths_covariates_to_outputs(self):
+    def get_weights_covariates_to_outputs(self):
         return self.backend.weights_covariates_to_outputs
     
     def get_treatment_effect_type(self):
