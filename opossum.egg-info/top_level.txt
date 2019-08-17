@@ -1,1 +1,4 @@
+idea
+lib
 opossum
+plots

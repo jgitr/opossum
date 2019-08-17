@@ -1,14 +1,14 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup_args = dict(
     name='opossum',
-    version='0.1.0',
+    version='0.1.6',
     description='Simulated Data Generating Process',
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    packages=find_namespace_packages(),
     license='MIT',
     url="https://humboldt-wi.github.io/blog/research/",
     author='Tobias Krebs, Julian Winkel',
@@ -20,7 +20,6 @@ install_requires = [
     'statsmodels',
     'seaborn',
     'matplotlib',
-    'time',
     'scipy'
 ]
 
