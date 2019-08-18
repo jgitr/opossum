@@ -1,3 +1,26 @@
+# Getting Started
+Latest release version: 0.2.0
+
+## Download with pip
+
+### *nix OS
+`pip3 install opossum`
+
+### Windows
+`pip install opossum --user --upgrade`
+
+## Build it yourself
+`git clone https://github.com/jgitr/opossum.git`  
+`cd opossum`  
+`git checkout master`  
+`cd src`  
+
+### *nix
+`python3 main.py`
+
+### Windows
+`python main.py`
+
 
 # Simulated Data Generating Process
 
