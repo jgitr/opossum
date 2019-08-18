@@ -21,16 +21,15 @@ Latest release version: 0.2.0
 ### Windows
 `python main.py`
 
-### Sha-256 Hashes
-
-## opossum-0.2.0-py3-none-any.whl 
+### SHA-256: opossum-0.2.0-py3-none-any.whl 
 `19b0b705b37a71fd5deac40720d30da4caa6529a9f1e1e7db648ecd07aea3077`
 
-## opossum-0.2.0.tar.gz 
+### SHA-256: opossum-0.2.0.tar.gz 
 `e13000b1755576a80693dca5f2560cc9b7d3e1391701bdc5cae86f3a9b7eb036`
 
+  
 
-# Simulated Data Generating Process
+# Project Overview: Simulated Data Generating Process
 
 ## Task: Simulate realistic data set with known treatment effects
 
