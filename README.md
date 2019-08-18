@@ -10,10 +10,10 @@ Latest release version: 0.2.0
 `pip install opossum --user --upgrade`
 
 ## Build it yourself
-`git clone https://github.com/jgitr/opossum.git`
-`cd opossum`
-`git checkout master`
-`cd src`
+`git clone https://github.com/jgitr/opossum.git`  
+`cd opossum`  
+`git checkout master`  
+`cd src`  
 
 ### *nix
 `python3 main.py`
