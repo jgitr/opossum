@@ -2,8 +2,8 @@ from scipy import random, stats
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from helpers import standardize, is_pos_def, adjusting_assignment_level, \
-                    revert_string_prob, relation_fct
+from opossum.helpers import standardize, is_pos_def, adjusting_assignment_level, revert_string_prob, relation_fct
+
 
 class SimData:
     """

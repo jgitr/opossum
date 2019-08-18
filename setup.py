@@ -5,12 +5,12 @@ with open("README.md", "r") as fh:
 
 setup_args = dict(
     name='opossum',
-    version='0.1.6',
+    version='0.2.0',
     description='Simulated Data Generating Process',
     long_description_content_type="text/markdown",
     packages=find_namespace_packages(),
     license='MIT',
-    url="https://humboldt-wi.github.io/blog/research/",
+    url="https://github.com/jgitr/opossum",
     author='Tobias Krebs, Julian Winkel',
     author_email='julian.winkel@hu-berlin.de'
 )
