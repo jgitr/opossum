@@ -7,6 +7,7 @@ setup_args = dict(
     name='opossum',
     version='0.2.0',
     description='Simulated Data Generating Process',
+    long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_namespace_packages(),
     license='MIT',
