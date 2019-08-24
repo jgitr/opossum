@@ -2,8 +2,8 @@ from scipy import random, stats
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from helpers import standardize, is_pos_def, adjusting_assignment_level, \
-                    revert_string_prob, relation_fct
+from opossum.helpers import standardize, is_pos_def, adjusting_assignment_level, revert_string_prob, relation_fct
+
 
 class SimData:
     """
@@ -32,18 +32,19 @@ class SimData:
         '''
         if seed is not None:
             random.seed(seed) # For debugging
+
         self.N = N #  number of observations
         self.k = k #  number of covariates
-        
-        # initilizing weight vector for treatment assignment 
+
+        # initilizing weight vector for treatment assignment
         # using random weights from U[0,1]
         self.weights_treatment_assignment = np.random.uniform(0,1,self.k)
-        # doing the same for relation of X and y with 
+        # doing the same for relation of X and y with
         # beta distribution (alpha=1, beta=5)
         self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) 
         # set size of subset Z of X for heterogeneous treatment creation
         self.z_set_size_treatment = np.int(self.k/2)
-        # set size of subset Z of X for non-random treatment assignment        
+        # set size of subset Z of X for non-random treatment assignment
         self.z_set_size_assignment = np.int(self.k/2)
         # set number of covariates used for creating interaction terms of X
         self.interaction_num = int(np.sqrt(self.k))
@@ -788,7 +789,7 @@ class UserInterface:
         return self.backend.propensity_scores
     
     def get_weights_treatment_assignment(self):
-        return self.backend.weights_treatment_assignment
+	return self.backend.weights_treatment_assignment
     
     def get_weights_covariates_to_outputs(self):
         return self.backend.weights_covariates_to_outputs
@@ -892,7 +893,6 @@ class UserInterface:
     def __str__(self):
         return "N = {}, k = {} \n" .format(self.backend.get_N(),
                                            self.backend.get_k())
-
 
 
 

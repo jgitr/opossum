@@ -88,16 +88,31 @@ def output_difference_plt(y_treated_continuous, y_not_treated_continuous,
     
     sns.despine(right=True, top=True)
     plt.setp(axes[1], xticks=[0,1])
+
+
+def single_treatment_effect_plt(treatment, assignment):
+    only_treat = treatment[assignment==1]
+    fig, ax = plt.subplots()
+    
+    ax.set_xlabel('Size of treatment effect')
+    
+    sns.despine(left=True, right=True, top=True)
+    
+    sns.distplot(only_treat, ax = ax, hist=True, kde=False, 
+         bins=32, color = 'darkblue', 
+         hist_kws={'edgecolor':'black'},
+         kde_kws={'linewidth': 4})
+    
+    plt.setp(ax, yticks=[])    
     plt.tight_layout()
-
-
 
 
 def scatter_plot_y_x(x,y):
     fig, ax = plt.subplots()
-    
+
     ax.set_xlabel('x')
     ax.set_ylabel('y')
+
     
     sns.despine(left=False, right=True, top=True)
     
@@ -111,12 +126,12 @@ def scatter_plot_y_x_treatment_difference(x,y,assignment):
     
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    
+
     sns.despine(left=False, right=True, top=True)
     
     sns.scatterplot(x[assignment==0], y[assignment==0], size=1)
     sns.scatterplot(x[assignment==1], y[assignment==1], size=1)
-    
+
     plt.setp(ax) 
     plt.tight_layout()
 
