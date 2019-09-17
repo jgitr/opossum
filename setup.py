@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup_args = dict(
     name='opossum',
-    version='0.2.0',
+    version='0.2.1',
     description='Simulated Data Generating Process',
     long_description=long_description,
     long_description_content_type="text/markdown",

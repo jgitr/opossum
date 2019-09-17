@@ -25,4 +25,3 @@ if __name__ == "__main__":
                                                 x_y_relation = 
                                                 'partial_nonlinear_simple')
 
-
