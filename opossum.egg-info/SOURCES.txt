@@ -1,12 +1,11 @@
 README.md
 setup.py
+double_machine_learning_example/dml.py
+double_machine_learning_example/dml_plot.py
 opossum/__init__.py
-opossum/dml.py
-opossum/dml_plot.py
 opossum/helpers.py
 opossum/main.py
 opossum/opossum.py
-opossum/plot_creation.py
 opossum/plot_functions.py
 opossum.egg-info/PKG-INFO
 opossum.egg-info/SOURCES.txt
