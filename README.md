@@ -3,7 +3,7 @@
 Package for simulation of data generating process to evaluate causal inference models.
 
 ## Getting Started
-Latest release version: 0.2.0
+Latest release version: 0.2.1
 
 ### Download with pip
 
