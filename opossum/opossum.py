@@ -2,8 +2,8 @@ from scipy import random, stats
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from helpers import standardize, is_pos_def, adjusting_assignment_level, \
-                    revert_string_prob, relation_fct
+from opossum.helpers import standardize, is_pos_def, adjusting_assignment_level, revert_string_prob, relation_fct
+
 
 class SimData:
     """
@@ -32,18 +32,19 @@ class SimData:
         '''
         if seed is not None:
             random.seed(seed) # For debugging
-        self.N = N # Natural, number of observations
-        self.k = k # Natural, number of covariates
-        
-        # initilizing weight vector for treatment assignment 
+
+        self.N = N #  number of observations
+        self.k = k #  number of covariates
+
+        # initilizing weight vector for treatment assignment
         # using random weights from U[0,1]
         self.weights_treatment_assignment = np.random.uniform(0,1,self.k)
-        # doing the same for relation of X and y with 
+        # doing the same for relation of X and y with
         # beta distribution (alpha=1, beta=5)
         self.weights_covariates_to_outputs =  np.random.beta(1,5,self.k) 
         # set size of subset Z of X for heterogeneous treatment creation
         self.z_set_size_treatment = np.int(self.k/2)
-        # set size of subset Z of X for non-random treatment assignment        
+        # set size of subset Z of X for non-random treatment assignment
         self.z_set_size_assignment = np.int(self.k/2)
         # set number of covariates used for creating interaction terms of X
         self.interaction_num = int(np.sqrt(self.k))
@@ -705,8 +706,8 @@ class UserInterface:
             intensity (int or float): Value affects the size of the treatment 
                 effect. Needs to be between 1 and 10. Formula for the actual
                 magnitude of the treatment effects are: 
-                const: intensity*0.1, heterogeneous: [0, intensity*0.2]
-                discrete_heterogeneous: {intensity*0.05, intensity*0.1}
+                const: intensity*0.2, heterogeneous: [0, intensity*0.4]
+                discrete_heterogeneous: {intensity*0.1, intensity*0.2}
                 (default is 5)
         
         Treatment assignment can be done randomly or determined by a subset Z of 
@@ -782,12 +783,15 @@ class UserInterface:
         return None
     
     def get_propensity_scores(self):
+        '''
+        Returns probabilities that were used in treatment assignment
+        '''
         return self.backend.propensity_scores
     
     def get_weights_treatment_assignment(self):
-        return self.backend.weights_treatment_assignment
+	return self.backend.weights_treatment_assignment
     
-    def get_weigths_covariates_to_outputs(self):
+    def get_weights_covariates_to_outputs(self):
         return self.backend.weights_covariates_to_outputs
     
     def get_treatment_effect_type(self):
@@ -809,12 +813,19 @@ class UserInterface:
         return self.backend.treatment_effect_type
         
     def set_weights_treatment_assignment(self, new_weight_vector):
+        '''
+        Change weight vector that is applied in treatment assignment and 
+        treatment effect creation
+        '''
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
             
         self.backend.weights_treatment_assignment = np.array(new_weight_vector)
             
     def set_weights_covariates_to_outputs(self, new_weight_vector):
+        '''
+        Change weight vector that is applied in translation of X to y
+        '''
         if len(new_weight_vector) is not self.backend.get_k():
             raise ValueError('New weight vector needs to be of dimension k')
         
@@ -880,9 +891,8 @@ class UserInterface:
         self.interaction_num = new_num
         
     def __str__(self):
-        return "N = " + str(self.backend.get_N()) + ", k = " + \
-                str(self.backend.get_k())
-
+        return "N = {}, k = {} \n" .format(self.backend.get_N(),
+                                           self.backend.get_k())
 
 
 

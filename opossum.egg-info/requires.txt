@@ -1,0 +1,5 @@
+numpy
+statsmodels
+seaborn
+matplotlib
+scipy
