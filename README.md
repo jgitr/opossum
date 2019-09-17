@@ -1,6 +1,5 @@
 
 # Opossum 
-
 Package for simulation of data generating process to evaluate causal inference models.
 
 ## Getting Started
@@ -26,8 +25,13 @@ Latest release version: 0.2.0
 #### Windows
 `python main.py`
 
-## Application
+#### SHA-256: opossum-0.2.0-py3-none-any.whl 
+`19b0b705b37a71fd5deac40720d30da4caa6529a9f1e1e7db648ecd07aea3077`
 
+#### SHA-256: opossum-0.2.0.tar.gz 
+`e13000b1755576a80693dca5f2560cc9b7d3e1391701bdc5cae86f3a9b7eb036`
+
+## Application
 Bellow you can find a short description of the core functions that the package offers in code form. For more detailed information on how to apply the package and to get insight into the theoretical model that it is based on, please refer to the following blog post https://humboldt-wi.github.io/blog/research/applied_predictive_modeling_19/data_generating_process_blogpost/.
 
 ### Default Setting
